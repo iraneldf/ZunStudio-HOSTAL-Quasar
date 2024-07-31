@@ -1,0 +1,107 @@
+// app global css in SCSS form
+.ll{
+  margin-top: 0.6rem;
+  margin-left: 1rem
+}
+.t{
+  background: secondary;
+color: white;
+}
+.h{
+  justify-content: space-between
+}
+#mainLayout
+{
+  color:$dark-page;
+  // VERDE CLARITO background-color: #deefdf;
+ // vERDE oCURO background-color: #D7EDD9; 
+  background-color: #eff4f0;
+}
+.iq {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0.5rem;
+}
+.iq span{
+  color: white;
+}
+.iq i{
+  color: white;
+}
+.cortarColumna{
+  overflow: hidden;
+  max-width: 150px;
+  white-space: nowrap;
+}
+.centered-table .q-table__cell {
+  text-align: center;
+}
+.q-dialog__backdrop {
+  backdrop-filter: blur(4px) saturate(150%);
+}
+.card {
+  transition: transform 0.1s;
+  background-color: #F9FFF9;
+  z-index: 2;
+  /* Asegúrate de que la tarjeta esté por encima del icono */
+  box-shadow: 15px 4px 24px 0 rgba(33, 82, 115, 0.12);
+  border-radius: 15px;
+}
+
+.card:hover {
+  text-decoration-color: #ffffff;
+  transform: scale(1.05);
+  background: linear-gradient(146deg, #329D9C 0%, #59E3E2 121.21%);
+  color: #ffffff;
+}
+
+.card:hover .li {
+  color: #ffffff;
+}
+.jj {
+  width: 90%; 
+  margin: auto;
+}
+.jj .card {
+  transition: all .5s;
+  margin-top: 2rem;
+}
+
+.icon-container {
+  padding: 2px;
+  display: flex;
+  justify-content: left;
+  z-index: 1;
+  /* Asegúrate de que el icono esté debajo de la tarjeta */
+}
+
+.ico {
+  margin-top: 0.5rem;
+  color: #171740;
+  padding: 4px;
+  background: linear-gradient(146deg, #329D9C 0%, #59E3E2 121.21%);
+  border-radius: 10px;
+  text-align: left;
+  box-shadow: 18.571px 4.952px 29.714px 0px rgba(33, 82, 115, 0.12);
+}
+.card:hover .ico {
+  color: #ffffff;
+}
+
+.text-container {
+  text-align: left;
+}
+
+.li {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #205072;
+}
+
+.card-title {
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+
