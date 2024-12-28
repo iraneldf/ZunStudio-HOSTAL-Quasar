@@ -10,8 +10,7 @@
       loading-label="Cargando..." rows-per-page-label="Filas por página">
       <template v-slot:top>
         <div class="col-4 q-table__title"><span>Piso</span>
-          <q-input outline color="primary" flat v-model="filter" debounce="1000" label="Buscar"
-             />
+          <q-input outline color="primary" flat v-model="filter" debounce="1000" label="Buscar"/>
         </div>
         <q-space />
 
@@ -37,7 +36,7 @@
                   <q-input :disable="!!objeto.id" label="Código*" v-model="objeto.codigo" color="primary" counter
                     maxlength="50" lazy-rules :rules="[
                       (val) => (val && val.length > 0) || 'Debe insertar un Código',
-                      (val) => (items.length > 0 ? !isCodigoRepetido(val, objeto, items) : true) || 'Ya existe un codigo con ese valor',
+                     // (val) => (items.length > 0 ? !isCodigoRepetido(val, objeto, items) : true) || 'Ya existe un codigo con ese valor',
                     ]" />
 
                 </div>
@@ -76,8 +75,8 @@
       </template>
       <template v-slot:body-cell-activo="props">
         <q-td :props="props">
-          <q-icon flat :name="(props.value == 0) ? 'highlight_off' : 'check_circle'"
-            :class="(props.value == 0) ? 'text-grey' : 'text-primary'" size="20px" />
+          <q-icon flat :name="(props.value === 0) ? 'highlight_off' : 'check_circle'"
+            :class="(props.value === 0) ? 'text-grey' : 'text-primary'" size="20px" />
         </q-td>
       </template>
 

@@ -1,9 +1,12 @@
 /* eslint-disable no-unreachable */
 // IMPORT
 import { api } from 'src/boot/axios'
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { Error, Success } from 'src/boot/notify'
+
+const serverUrl = process.env.SERVER_URL
 const title = ref('')
+
 const enviarStorage = (value) => {
   if (value !== '') {
     localStorage.setItem('empresa', JSON.stringify(value))
@@ -11,13 +14,12 @@ const enviarStorage = (value) => {
 }
 
 const recibirStorage = () => {
-  const v = JSON.parse(localStorage.getItem('empresa'))
-  return v
+  return JSON.parse(localStorage.getItem('empresa'))
 }
 // Funcion para cargar todos los datos de una tabla
 const loadGet = async (endpoint) => {
   return await api
-    .get(endpoint)
+    .get(`${serverUrl}${endpoint}`)
     .then((r) => {
       return r.data.result.elementos
     })
@@ -30,7 +32,7 @@ const loadGet = async (endpoint) => {
 // Funcion que se utiliza para cargar los datos en las opciones de los select
 const loadSelectList = async (endpoint) => {
   return await api
-    .get(endpoint)
+    .get(`${serverUrl}${endpoint}`)
     .then((r) => {
       return r.data.result
     })
@@ -59,66 +61,91 @@ const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
     resultado: null,
     mensajeError: null
   })
-  dialogLoad.value = true
-  if (objeto.id) {
-    return await api.put(`/${endpoint}/${objeto.id}`, objeto).then(async (response) => {
-      respuesta.resultado = response
-      Success.call(this, 'El elemento ha sido modificado correctamente')
-      await load()
-      await close()
-      dialogLoad.value = false
-      return respuesta
-    }).catch(async (error) => {
-      respuesta.mensajeError = error
-      await load()
-      await close()
-      dialogLoad.value = false
-      return respuesta
-    })
-  } else {
-    return await api.post(`/${endpoint}`, objeto).then(async (response) => {
-      respuesta.resultado = response
-      Success.call(this, 'El elemento ha sido creado correctamente')
-      await load()
-      await close()
-      dialogLoad.value = false
-      return respuesta
-    }).catch(async (error) => {
-      respuesta.mensajeError = error
-      await load()
-      await close()
-      dialogLoad.value = false
-      return respuesta
-    })
+
+  try {
+    dialogLoad.value = true
+
+    const method = objeto.id ? 'put' : 'post'
+    const url = `${serverUrl}${endpoint}/${objeto.id || ''}`
+
+    respuesta.resultado = await api[method](url, objeto)
+    Success.call(this, objeto.id ? 'El elemento ha sido modificado correctamente' : 'El elemento ha sido creado correctamente')
+
+    await load()
+    await close()
+    dialogLoad.value = false
+
+    return respuesta
+  } catch (error) {
+    if (error.response) {
+      // La solicitud fue exitosa, pero hubo un problema con el cuerpo
+      // o los encabezados de la respuesta.
+      console.error('Error de red:', error.response)
+      respuesta.mensajeError = error.response.data.errorMessage || error.response.data.title
+      Error.call(this, error.response.data.errorMessage || error.response.data.title)
+    } else if (error.request) {
+      // La solicitud nunca tomó vuela y nunca recibió respuesta,
+      // ni siquiera un error de red.
+      console.error('Error de red:', error.request)
+    } else {
+      // Otros tipos de errores
+      console.error('Error:', error.message)
+    }
+    // await load()
+    // await close()
+    dialogLoad.value = false
+    return respuesta
   }
 }
 // Funcion de Eliminar
 const eliminarElemento = async (endpoint, id, load, dialogLoad) => {
   const respuesta = reactive({
     resultado: null,
-    mensajeError: null
+    mensajeError: null,
+    errorApi: null
   })
-  dialogLoad.value = true
-  return await api.delete(`/${endpoint}/${id}`).then(async (response) => {
+
+  try {
+    dialogLoad.value = true
+
+    const [response] = await Promise.all([api.delete(`${serverUrl}${endpoint}/${id}`)])
     respuesta.resultado = response
     Success.call(this, 'El elemento ha sido eliminado correctamente')
-    setTimeout(async () => {
-      await load()
-      dialogLoad.value = false
-    })
-    return respuesta
-  }).catch(async (error) => {
-    respuesta.mensajeError = error
+
+    await load()
     dialogLoad.value = false
+
     return respuesta
-  })
+  } catch (error) {
+    console.error('Error en eliminarElemento:', error)
+
+    if (error.response) {
+      // La solicitud fue exitosa, pero hubo un problema con el cuerpo o los encabezados de la respuesta.
+      respuesta.mensajeError = error.response.data || error.message
+      respuesta.errorApi = error.response.status
+    } else if (error.request) {
+      // La solicitud nunca tomó vuelo y nunca recibió respuesta, ni siquiera un error de red.
+      respuesta.mensajeError = 'Error de conexión: No se pudo conectar con el servidor.'
+    } else {
+      // Otros tipos de errores
+      respuesta.mensajeError = error.message || 'Ha ocurrido un error inesperado.'
+    }
+
+    Error.call(this, respuesta.mensajeError)
+
+    await load()
+    dialogLoad.value = false
+
+    return respuesta
+  }
 }
+
 // Funcion para Obtener datos por id esto se utiliza generalmente para cargar los datos del formulario
 const obtener = async (endpoint, id, objeto, dialogLoad, dialog) => {
   dialogLoad.value = true
-  await api.get(`${endpoint}/${id}`)
+  await api.get(`${serverUrl}${endpoint}/${id}`)
     .then(r => {
-      Object.assign(objeto, r.data.result)
+      console.log(r.data.result)
       title.value = `Editar ${endpoint}`
       dialog.value = true
     }).catch((error) => {
@@ -126,11 +153,11 @@ const obtener = async (endpoint, id, objeto, dialogLoad, dialog) => {
     })
   dialogLoad.value = false
 }
+
 // Funcion para verificar que los campos sean unicos
 const isValorRepetido = (val, propiedad, objeto, items) => {
   return items.some((e) => e[propiedad] === val && objeto.id !== e.id)
 }
-
 // Funcion para resetear los campos del dialogo y cerrarlo
 const closeDialog = (objeto, objetoInicial, myForm, dialog) => {
   myForm.value.resetValidation()
@@ -139,33 +166,61 @@ const closeDialog = (objeto, objetoInicial, myForm, dialog) => {
 }
 // Funcion para Filtrado
 const filterOptions = (val, update, options, filterField, array) => {
-  update(
-    () => {
-      const needle = val ? val.toLowerCase() : ''
-      options = array.filter(
-        (v) => v[filterField] && v[filterField].toLowerCase().indexOf(needle) >= 0
-      )
-    },
-    (ref) => {
-      if (
-        val !== '' &&
-            ref.options.length > 0 &&
-            ref.getOptionIndex() === -1
-      ) {
-        ref.moveOptionSelection(1, true) // enfoca la primera opción seleccionable y no actualiza el valor del input
-        ref.toggleOption(ref.options[ref.optionIndex], true) // alterna la opción enfocada
-      }
+  update(() => {
+    const needle = val ? val.toLowerCase() : ''
+    options = array.filter(
+      (v) => v[filterField] && v[filterField].toLowerCase().indexOf(needle) >= 0
+    )
+  }, (ref) => {
+    if (
+      val !== '' &&
+      ref.options.length > 0 &&
+      ref.getOptionIndex() === -1
+    ) {
+      ref.moveOptionSelection(1, true) // enfoca la primera opción seleccionable y no actualiza el valor del input
+      ref.toggleOption(ref.options[ref.optionIndex], true) // alterna la opción enfocada
     }
-  )
+  })
   return options
 }
+// Filtrar por varios campos
+const filterOptionsMultipleFields = (val, update, options, filterFields, array) => {
+  update(() => {
+    const needle = val ? val.toLowerCase() : ''
+
+    // Filtrar por múltiples campos
+    options = array.filter(item => {
+      let match = false
+
+      // Verificar cada campo de filtro
+      filterFields.forEach(field => {
+        if (item[field] && item[field].toLowerCase().includes(needle)) {
+          match = true
+        }
+      })
+
+      return match
+    })
+  }, (ref) => {
+    if (
+      val !== '' &&
+      ref.options.length > 0 &&
+      ref.getOptionIndex() === -1
+    ) {
+      ref.moveOptionSelection(1, true)
+      ref.toggleOption(ref.options[ref.optionIndex], true)
+    }
+  })
+
+  return options
+}
+
 // Función para validar carnet
 const validarCarnet = (val) => {
   // Verificar que tenga 11 dígitos
   if (val.length !== 11) {
     return false
   }
-
   // Obtener el número de mes
   const mes = parseInt(val.substr(2, 2), 10)
 
@@ -219,6 +274,7 @@ export {
   validarSoloNumeros,
   validarCorreo,
   filterOptions,
+  filterOptionsMultipleFields,
   eliminarElemento,
   validarCarnet,
   isValorRepetido,

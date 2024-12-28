@@ -80,7 +80,7 @@
                   transition-hide="flip-down"
                   class="col-xs-12 col-sm-6"
                   v-model="objeto.pisoId"
-                  label="Piso *"
+                  label="Piso*"
                   emit-value
                   map-options
                   :use-input="objeto.pisoId === null || objeto.pisoId === ''"
@@ -215,8 +215,8 @@
         <q-td :props="props">
           <q-icon
             flat
-            :name="props.value == 0 ? 'highlight_off' : 'check_circle'"
-            :class="props.value == 0 ? 'text-grey' : 'text-primary'"
+            :name="props.value === 0 ? 'highlight_off' : 'check_circle'"
+            :class="props.value === 0 ? 'text-grey' : 'text-primary'"
             size="20px"
           />
         </q-td>

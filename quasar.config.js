@@ -7,13 +7,18 @@
 
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-webpack/quasar-config-js
+const dotenv = require('dotenv')
+const path = require('path')
 
 const ESLintPlugin = require('eslint-webpack-plugin')
 
 const { configure } = require('quasar/wrappers')
 
-module.exports = configure(function (ctx) {
-  return {
+module.exports = configure(ctx => {
+  const envPath = path.join(__dirname, `.env.${process.env.NODE_ENV}`)
+
+  dotenv.config({ path: envPath })
+  return ({
     // https://v2.quasar.dev/quasar-cli-webpack/supporting-ts
     supportTS: false,
 
@@ -51,6 +56,9 @@ module.exports = configure(function (ctx) {
     // Full list of options: https://v2.quasar.dev/quasar-cli-webpack/quasar-config-js#Property%3A-build
     build: {
       vueRouterMode: 'hash', // available values: 'hash', 'history'
+      env: {
+        SERVER_URL: process.env.SERVER_URL
+      },
 
       // transpile: false,
       // publicPath: '/',
@@ -78,8 +86,7 @@ module.exports = configure(function (ctx) {
       }
 
     },
-
-    // Full list of options: https://v2.quasar.dev/quasar-cli-webpack/quasar-config-js#Property%3A-devServer
+// Full list of options: https://v2.quasar.dev/quasar-cli-webpack/quasar-config-js#Property%3A-devServer
     devServer: {
       server: {
         type: 'http'
@@ -231,6 +238,8 @@ module.exports = configure(function (ctx) {
           .use(ESLintPlugin, [{ extensions: ['js'] }])
       }
 
+
+
     }
-  }
+  })
 })

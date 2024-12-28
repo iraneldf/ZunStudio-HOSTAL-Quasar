@@ -6,8 +6,9 @@
           <q-icon class="ico q-pa-sm" size="2.5rem" :name="props.icon" />
         </div>
         <div class="text-container q-mt-md q-pl-xs">
-          <q-card-section class="li justify-center  q-pl-none card-title" style="height: 70px;">{{ props.title
-            }}</q-card-section>
+          <q-card-section class="li justify-center  q-pl-none card-title" style="height: 70px;">
+            {{ props.title}}
+          </q-card-section>
         </div>
       </div>
     </q-card-section>

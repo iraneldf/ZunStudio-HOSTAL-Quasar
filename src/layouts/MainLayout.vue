@@ -11,13 +11,14 @@
             round
             dense
             icon="menu"
-            ><q-tooltip>{{
-              drawer ? "Cerrar Menú" : "Abrir Menú"
-            }}</q-tooltip></q-btn
-          >
-          <q-toolbar-title class="text-subtitle6 text-white">
-            Cascarón</q-toolbar-title
-          >
+            >
+            <q-tooltip>
+              {{drawer ? "Cerrar Menú" : "Abrir Menú"}}
+            </q-tooltip>
+
+          </q-btn>
+
+          <q-toolbar-title class="text-subtitle6 text-white">Hostal</q-toolbar-title>
         </div>
         <q-space />
         <q-btn class="q-mr-xl" flat round dense icon="group_add" />
@@ -37,9 +38,11 @@
         </q-list>
       </q-scroll-area>
     </q-drawer>
+
     <q-page-container>
       <router-view />
     </q-page-container>
+
   </q-layout>
 </template>
 

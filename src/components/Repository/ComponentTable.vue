@@ -134,8 +134,8 @@
         <q-td :props="props">
           <q-icon
             flat
-            :name="props.value == 0 ? 'highlight_off' : 'check_circle'"
-            :class="props.value == 0 ? 'text-grey' : 'text-primary'"
+            :name="props.value === 0 ? 'highlight_off' : 'check_circle'"
+            :class="props.value === 0 ? 'text-grey' : 'text-primary'"
             size="20px"
           />
         </q-td>
@@ -180,6 +180,7 @@ const Guardar = () => {
 
 // Funcion para Obtener los datos para editar
 const obtenerElementoPorId = async (id) => {
+  console.log(id)
 }
 
 // Funcion para eliminar elemento

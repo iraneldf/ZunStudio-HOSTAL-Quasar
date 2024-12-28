@@ -22,6 +22,26 @@ const routes = [
         path: 'Casilla',
         name: 'Casilla',
         component: () => import('src/pages/Nomenclators/Casilla.vue')
+      },
+      {
+        path: 'Clientes',
+        name: 'Clientes',
+        component: () => import('src/pages/Nomenclators/Cliente.vue')
+      },
+      {
+        path: 'AmaDeLlaves',
+        name: 'AmaDeLlaves',
+        component: () => import('src/pages/Nomenclators/AmaDeLlave.vue')
+      },
+      {
+        path: 'Habitaciones',
+        name: 'Habitaciones',
+        component: () => import('src/pages/Nomenclators/Habitacion.vue')
+      },
+      {
+        path: 'Reservas',
+        name: 'Reservas',
+        component: () => import('src/pages/Nomenclators/Reserva.vue')
       }
     ]
   },
