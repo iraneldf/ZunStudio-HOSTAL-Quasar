@@ -255,7 +255,7 @@ const eliminar = async () => {
   await eliminarElemento('/api/AmaDeLlave/Eliminar', idElementoSeleccionado.value, load, dialogLoad)
 }
 
-// Funcion para abrir el dialog de eliminar y pasar el id del elemento
+// Funcion para abrir el dialog de eliminar y pasar el ID del elemento
 const abrirDialogoEliminar = (id) => {
   idElementoSeleccionado.value = id
   isDialogoEliminarAbierto.value = true

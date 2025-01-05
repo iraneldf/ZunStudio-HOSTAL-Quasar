@@ -41,20 +41,14 @@ const estados = [
     value: 0
   },
   {
-    label: 'Ocupado',
-    value: 1
-  },
-  {
     label: 'Fuera De Servicio',
-    value: 2
+    value: 1
   }
 ]
 const getIconName = (estado) => {
   switch (estado) {
     case 'Disponible':
       return 'check_circle'
-    case 'Ocupado':
-      return 'pause_circle'
     case 'FueraDeServicio':
       return 'error'
     default:

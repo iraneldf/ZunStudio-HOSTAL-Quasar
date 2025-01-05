@@ -21,6 +21,7 @@ const loadGet = async (endpoint) => {
   return await api
     .get(`${serverUrl}${endpoint}`)
     .then((r) => {
+      console.log()
       return r.data.result.elementos
     })
     .catch((error) => {
@@ -67,7 +68,8 @@ const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
 
     const method = objeto.id ? 'put' : 'post'
     const url = `${serverUrl}${endpoint}/${objeto.id || ''}`
-
+    console.log(url)
+    console.log(objeto)
     respuesta.resultado = await api[method](url, objeto)
     Success.call(this, objeto.id ? 'El elemento ha sido modificado correctamente' : 'El elemento ha sido creado correctamente')
 
@@ -80,13 +82,12 @@ const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
     if (error.response) {
       // La solicitud fue exitosa, pero hubo un problema con el cuerpo
       // o los encabezados de la respuesta.
-      console.error('Error de red:', error.response)
+      console.error('Error de red:')
       respuesta.mensajeError = error.response.data.errorMessage || error.response.data.title
       Error.call(this, error.response.data.errorMessage || error.response.data.title)
     } else if (error.request) {
       // La solicitud nunca tomó vuela y nunca recibió respuesta,
       // ni siquiera un error de red.
-      console.error('Error de red:', error.request)
     } else {
       // Otros tipos de errores
       console.error('Error:', error.message)
@@ -131,7 +132,7 @@ const eliminarElemento = async (endpoint, id, load, dialogLoad) => {
       respuesta.mensajeError = error.message || 'Ha ocurrido un error inesperado.'
     }
 
-    Error.call(this, respuesta.mensajeError)
+    Error.call(this, respuesta.mensajeError)``
 
     await load()
     dialogLoad.value = false
@@ -145,8 +146,8 @@ const obtener = async (endpoint, id, objeto, dialogLoad, dialog) => {
   dialogLoad.value = true
   await api.get(`${serverUrl}${endpoint}/${id}`)
     .then(r => {
-      console.log(r.data.result)
       title.value = `Editar ${endpoint}`
+      Object.assign(objeto, r.data.result)
       dialog.value = true
     }).catch((error) => {
       error.response === undefined ? Error.call(this, error.message) : Error.call(this, error.response.data.mensajeError)

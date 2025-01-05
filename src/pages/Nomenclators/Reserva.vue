@@ -16,7 +16,7 @@
 
         <q-btn class="bg-primary" style="width: 20px" color="primary" icon="add" @click="dialog = true">
           <q-tooltip class="bg-primary" transition-show="flip-right" transition-hide="flip-left"
-                     :offset="[10, 10]">Adicionar
+                     :offset="[10, 10]">Adicionar reserva
           </q-tooltip>
         </q-btn>
         <q-btn outline class="bg-white q-ml-sm" style="width: 20px" color="primary" icon="print"
@@ -62,13 +62,14 @@
                       class="col-xs-12 col-sm-12"
                       v-model="objeto.clienteId"
                       label="Seleccionar Cliente*"
+                      :loading="cargandoClientes"
                       emit-value
                       map-options
                       use-input
                       :options="filtradoCliente"
                       option-value="id"
                       :option-label="getCustomLabelCliente"
-                      :rules="[(val) => (val && val.length > 0) || 'Debe seleccinar un Cliente',]"
+                      :rules="[(val) => !!val || 'Debe seleccinar un Cliente',]"
                       @filter="
                     (val, update) => {
                       filtradoCliente = filterOptionsMultipleFields(
@@ -97,11 +98,12 @@
                       label="Seleccionar Habitación*"
                       emit-value
                       map-options
+                      :loading="cargandoHabitaciones"
                       use-input
                       :options="filtradoHabitacion"
                       option-value="id"
                       :option-label="getCustomLabelHabitacion"
-                      :rules="[(val) => (val && val.length > 0) || 'Debe seleccinar una Habitación',]"
+                      :rules="[(val) => !!val || 'Debe seleccinar una Habitación',]"
                       @filter="
                     (val, update) => {
                       filtradoHabitacion = filterOptionsMultipleFields(
@@ -162,7 +164,7 @@
                    text-color="primary"
                    icon="check">
               <q-tooltip>
-                {{ props.row.llegadaCliente ? 'Confirmar llegada' : 'Cancelar llegada' }}
+                {{ props.row.llegadaCliente ? 'Confirmar llegada' : 'Confirmar llegada' }}
               </q-tooltip>
             </q-btn>
 
@@ -201,7 +203,14 @@ import {
   getCustomLabelHabitacion,
   fechasSeleccionadas,
   validarFechas,
-  errorMessage
+  errorMessage,
+  arrayHabitaciones,
+  arrayClientes,
+  cargandoClientes,
+  cargandoHabitaciones,
+  getClientes,
+  // eslint-disable-next-line no-unused-vars
+  getHabitaciones, obtenerHabitacion
 } from 'src/helpers/reserva'
 // Columnas de la Tabla,
 const columns = [
@@ -271,8 +280,6 @@ const filter = ref('')
 
 // Arreglos
 const items = ref([])
-const arrayClientes = ref([])
-const arrayHabitaciones = ref([])
 const filtradoHabitacion = ref([])
 const filtradoCliente = ref([])
 
@@ -287,24 +294,29 @@ const objetoInicial = reactive({
 const objeto = reactive({ ...objetoInicial })
 // Funciones
 // 1- Funcion para pasar parametros en el Adicionar SaveData
+// todo comprobar que al actualizar se reinicia la lista del select
 const Guardar = () => {
   if (!errorMessage.value) {
     objeto.fechaEntrada = fechasSeleccionadas.value.from
     objeto.fechaSalida = fechasSeleccionadas.value.to
-    console.log(objeto)
     const url = (objeto.id) ? '/api/Reserva/Actualizar' : '/api/Reserva/Crear'
     saveData(url, objeto, load, close, dialogLoad)
   }
 }
+// todo arreglar la lista del select al actualizar para q se vea la habitacion actual de la reserva
+// todo comprobar que al actualizar se reinicia la lista del select
 // Funcion para Obtener los datos para editar
 const obtenerElementoPorId = async (id) => {
   await obtener('/api/Reserva/ObtenerPorId', id, objeto, dialogLoad, dialog)
-  // poner fechas en el formulario
+  const fe = date.formatDate(objeto.fechaEntrada, 'YYYY-MM-DD')
+  const fs = date.formatDate(objeto.fechaSalida, 'YYYY-MM-DD')
   fechasSeleccionadas.value = {
-    to: date.formatDate(objeto.fechaEntrada, 'YYYY-MM-DD'),
-    from: date.formatDate(objeto.fechaSalida, 'YYYY-MM-DD')
+    from: fe,
+    to: fs
   }
-  console.log(objeto)
+  await getHabitaciones(fe, fs, objeto.habitacionId)
+  filtradoHabitacion.value = arrayHabitaciones.value
+  filtradoCliente.value = arrayClientes.value
 }
 
 // Funcion para eliminar elemento
@@ -312,7 +324,7 @@ const eliminar = async () => {
   await eliminarElemento('/api/Reserva/Eliminar', idElementoSeleccionado.value, load, dialogLoad)
 }
 
-// Funcion para abrir el dialog de eliminar y pasar el id del elemento
+// Funcion para abrir el dialog de eliminar y pasar el ID del elemento
 const abrirDialogoEliminar = (id) => {
   idElementoSeleccionado.value = id
   isDialogoEliminarAbierto.value = true
@@ -323,31 +335,32 @@ const abrirDialogoConfirmarLlegada = (id) => {
   dialogConfirmarLlegada.value = true
 }
 
-// 2- Funcion para pasar por parametro el arreglo de los elmentos de la tabla
+// 2- Funcion para pasar por parametro el arreglo de los elementos de la tabla
 const load = async () => {
   items.value = await loadGet('/api/Reserva/ObtenerListadoPaginado')
 }
 
-// Funcion para cerrar el dialog
+// Funcion para cerrar el dialog eliminar
 const handleCloseDialog = () => {
   isDialogoEliminarAbierto.value = false
 }
+// Funcion para cerrar el dialog confirmar llegada
 const handleCloseDialogConfirmar = () => {
   dialogConfirmarLlegada.value = false
 }
 // Funcion para cerrar el dialog principal de Adicionar y Editar y resetear los campos del formulario
 const close = async () => {
   fechasSeleccionadas.value = {} // reiniciar fechas
+  arrayHabitaciones.value = []
   closeDialog(objeto, objetoInicial, myForm, dialog)
 }
 // Funcion para cargar los datos al cargar la pagina
 onMounted(async () => {
-  // console.log(process.env.NODE_ENV)
   dialogLoad.value = true
+  // manejar paginacion
   items.value = await loadGet('/api/Reserva/ObtenerListadoPaginado')
-  arrayClientes.value = await loadGet('/api/Cliente/ObtenerListadoPaginado')
-  arrayHabitaciones.value = await loadGet('/api/Habitacion/ObtenerListadoPaginado?Estado=Disponible')
   dialogLoad.value = false
+  await getClientes()
 })
 
 </script>
