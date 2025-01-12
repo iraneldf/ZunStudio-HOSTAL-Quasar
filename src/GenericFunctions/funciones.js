@@ -21,7 +21,6 @@ const loadGet = async (endpoint) => {
   return await api
     .get(`${serverUrl}${endpoint}`)
     .then((r) => {
-      console.log()
       return r.data.result.elementos
     })
     .catch((error) => {
@@ -38,17 +37,23 @@ const loadSelectList = async (endpoint) => {
       return r.data.result
     })
     .catch((error) => {
-      error.response === undefined
-        ? Error.call(this, error.message)
-        : Error.call(this, error.response.data.mensajeError)
+      if (error.response) {
+        Error.call(this, error.response.data.errorMessage || error.response.data.title)
+      } else if (error.request) {
+        // La solicitud nunca tomó vuela y nunca recibió respuesta,
+        // ni siquiera un error de red.
+      } else {
+        // Otros tipos de errores
+        console.error('Error:', error.message)
+      }
     })
 }
 // Funcion para obtener una lista pasandole el endpoint y el arreglo
 const load = async (endpoint, lista) => {
   await api
-    .get(endpoint)
+    .get(`${serverUrl}${endpoint}`)
     .then((r) => {
-      lista.value = r.data.result.elementos
+      lista.value = r.data.result
     })
     .catch((error) => {
       error.response === undefined
@@ -68,8 +73,6 @@ const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
 
     const method = objeto.id ? 'put' : 'post'
     const url = `${serverUrl}${endpoint}/${objeto.id || ''}`
-    console.log(url)
-    console.log(objeto)
     respuesta.resultado = await api[method](url, objeto)
     Success.call(this, objeto.id ? 'El elemento ha sido modificado correctamente' : 'El elemento ha sido creado correctamente')
 
@@ -131,9 +134,7 @@ const eliminarElemento = async (endpoint, id, load, dialogLoad) => {
       // Otros tipos de errores
       respuesta.mensajeError = error.message || 'Ha ocurrido un error inesperado.'
     }
-
-    Error.call(this, respuesta.mensajeError)``
-
+    Error.call(this, respuesta.mensajeError)
     await load()
     dialogLoad.value = false
 
@@ -157,12 +158,13 @@ const obtener = async (endpoint, id, objeto, dialogLoad, dialog) => {
 
 // Funcion para verificar que los campos sean unicos
 const isValorRepetido = (val, propiedad, objeto, items) => {
+  console.log(items)
   return items.some((e) => e[propiedad] === val && objeto.id !== e.id)
 }
 // Funcion para resetear los campos del dialogo y cerrarlo
 const closeDialog = (objeto, objetoInicial, myForm, dialog) => {
   myForm.value.resetValidation()
-  Object.assign(objeto, objetoInicial)
+  reinicairCampos(objeto, objetoInicial)
   dialog.value = false
 }
 // Funcion para Filtrado
@@ -265,6 +267,19 @@ const validarSoloNumeros = (val) => {
   const regex = /^[0-9]+$/
 
   return regex.test(val)
+}
+
+// funcion nueva : renicia los campos del objeto
+function reinicairCampos (objeto, objetoInicial) {
+  // 1. Eliminar propiedades del objeto reactivo que no están en el nuevo objeto
+  for (const propiedad in objeto) {
+    if (!(propiedad in objetoInicial)) {
+      delete objeto[propiedad]
+    }
+  }
+
+  // 2. Copiar todas las propiedades del nuevo objeto al objeto reactivo
+  Object.assign(objeto, objetoInicial)
 }
 
 export {

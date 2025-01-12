@@ -1,7 +1,7 @@
 // Label personalidos del select de clientes
 
 import { date } from 'quasar'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { loadGet, loadSelectList } from 'src/GenericFunctions/funciones'
 import { api } from 'boot/axios'
 
@@ -11,15 +11,14 @@ const arrayHabitaciones = ref([])
 const cargandoClientes = ref(false)
 const cargandoHabitaciones = ref(false)
 const errorMessage = ref(null)
-const fechasSeleccionadas = ref({})
+const fechasSeleccionadas = ref(null)
+// Propiedad computada para formatear el rango de fechas
+const formattedDateRange = ref('')
+
 const habitacionActual = ref({})
 
 const getCustomLabelCliente = (cliente) => {
-  const vip = cliente.vip ? '(VIP)' : ''
-  return `${cliente.ci} ${cliente.nombre} ${cliente.apellidos} ${vip}`
-}
-const getCustomLabelHabitacion = (habitacion) => {
-  return `${habitacion.numero} (${habitacion.estado})`
+  return `${cliente.nombre} ${cliente.apellidos} (CI: ${cliente.ci})`
 }
 // Llamar clientes y habitaciones
 const getClientes = async () => {
@@ -33,7 +32,10 @@ const getHabitaciones = async (fI, fF, habitacionId) => {
   // cuando es editar le pasa la habitacion actual a las opcions del select ya que el endpoint no la trae pq la restreccion de las fechas
   if (habitacionId) {
     await obtenerHabitacion(habitacionId)
-    arrayHabitaciones.value.push(habitacionActual.value)
+    // agregar la habitacion actual si no la contiene
+    if (!arrayHabitaciones.value.some(h => h.id === habitacionActual.value.id)) {
+      arrayHabitaciones.value.push(habitacionActual.value)
+    }
   }
   cargandoHabitaciones.value = false
 }
@@ -48,6 +50,7 @@ const validarFechas = async (value) => {
     } = value
     const hoy = date.formatDate(new Date(), 'YYYY-MM-DD')
     if (from && to) {
+      formattedDateRange.value = `Fecha de entrada: ${from}, Fecha de salida: ${to}`
       const entrada = new Date(from)
       const salida = new Date(to)
       const diffTime = salida - entrada
@@ -66,6 +69,7 @@ const validarFechas = async (value) => {
       }
     }
   } else {
+    formattedDateRange.value = ''
     errorMessage.value = 'Las fechas son obligatorias.'
   }
 }
@@ -83,14 +87,20 @@ const obtenerHabitacion = async (id) => {
   // dialogLoad.value = false
 }
 
+const condicionMostrarSelects = computed(() => {
+  if (!fechasSeleccionadas.value) return false
+  return fechasSeleccionadas.value.to && fechasSeleccionadas.value.from && !errorMessage.value
+})
+
 export {
   getCustomLabelCliente,
-  getCustomLabelHabitacion,
   validarFechas,
   getClientes,
   getHabitaciones,
   obtenerHabitacion,
+  condicionMostrarSelects,
   fechasSeleccionadas,
+  formattedDateRange,
   errorMessage,
   arrayClientes,
   arrayHabitaciones,

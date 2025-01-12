@@ -13,14 +13,14 @@ import MenuCards from 'src/components/Cards/MenuCards.vue'
 
 const cards = [
   {
-    title: 'Reservas',
-    icon: 'hotel',
-    link: 'Reservas'
-  },
-  {
     title: 'Clientes',
     icon: 'person',
     link: 'CLientes'
+  },
+  {
+    title: 'Reservas',
+    icon: 'hotel',
+    link: 'Reservas'
   },
   {
     title: 'Ama De Llaves',

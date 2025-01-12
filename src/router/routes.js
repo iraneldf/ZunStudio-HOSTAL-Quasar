@@ -42,6 +42,21 @@ const routes = [
         path: 'Reservas',
         name: 'Reservas',
         component: () => import('src/pages/Nomenclators/Reserva.vue')
+      },
+      {
+        path: 'HabitacionesPorAmadeLlaves',
+        name: 'HabitacionesPorAmadeLlaves',
+        component: () => import('src/pages/Busqueda/HabitacionPorAmaDeLlave.vue')
+      },
+      {
+        path: 'ReservasPorFecha',
+        name: 'ReservasPorFecha',
+        component: () => import('src/pages/Busqueda/ReservasPorFecha.vue')
+      },
+      {
+        path: 'ReservasEnRango',
+        name: 'ReservasEnRango',
+        component: () => import('src/pages/Busqueda/ReservasEnRango.vue')
       }
     ]
   },

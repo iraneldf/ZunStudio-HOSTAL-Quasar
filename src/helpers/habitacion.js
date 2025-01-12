@@ -31,7 +31,7 @@ const columns = [
     align: 'center',
     label: 'Acciones',
     field: 'action',
-    sortable: true
+    sortable: false
   }
 ]
 // opciones de estado
@@ -45,40 +45,6 @@ const estados = [
     value: 1
   }
 ]
-const getIconName = (estado) => {
-  switch (estado) {
-    case 'Disponible':
-      return 'check_circle'
-    case 'FueraDeServicio':
-      return 'error'
-    default:
-      return ''
-  }
-}
-const getIconColor = (estado) => {
-  switch (estado) {
-    case 'Disponible':
-      return 'green'
-    case 'Ocupado':
-      return 'orange'
-    case 'FueraDeServicio':
-      return 'red'
-    default:
-      return ''
-  }
-}
-const getTooltipText = (estado) => {
-  switch (estado) {
-    case 'Disponible':
-      return 'Disponible'
-    case 'Ocupado':
-      return 'Ocupado'
-    case 'FueraDeServicio':
-      return 'Fuera de Servicio'
-    default:
-      return ''
-  }
-}
 const cambiarEstado = async (endpoint, objeto, load, close, dialogLoad) => {
   const respuesta = reactive({
     resultado: null,
@@ -115,8 +81,5 @@ export {
   cambiarEstado,
   columns,
   objetoInicial,
-  estados,
-  getTooltipText,
-  getIconName,
-  getIconColor
+  estados
 }

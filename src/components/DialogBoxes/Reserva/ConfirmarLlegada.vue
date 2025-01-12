@@ -6,7 +6,12 @@
           <q-avatar icon="warning" color="primary" text-color="white"/>
         </div>
         <div class="col-10 q-ml-md q-mt-md text-weight-bold">
-          ¿Confirmar llegada del cliente?
+          {{
+            props.reservaSeleccionada.llegadaCliente ?
+              '¿Cancelar confirmación llegada del cliente?'
+              :
+              '¿Confirmar llegada del cliente?'
+          }}
         </div>
       </q-card-section>
       <q-card-actions class="q-pb-md" align="right">
@@ -43,8 +48,8 @@ const props = defineProps({
     type: Boolean,
     required: true
   },
-  idElemento: {
-    type: String,
+  reservaSeleccionada: {
+    type: Object,
     required: true
   }
 })
@@ -59,9 +64,13 @@ const emit = defineEmits(['closeDialog', 'load'])
 
 const confirmarLlegada = async () => {
   dialogLoad.value = true
-  await api.get(`${serverUrl}/api/Reserva/registrar-llegada?ReservaId=${props.idElemento}`)
-    .then(() => {
-      Success.call(this, 'Se ha confirmado la llegada del cliente correctamente')
+  await api.get(`${serverUrl}/api/Reserva/registrar-llegada?ReservaId=${props.reservaSeleccionada.id}`)
+    .then((res) => {
+      if (res.data.result.llegadaCliente) {
+        Success.call(this, 'Se ha confirmado la llegada del cliente correctamente')
+      } else {
+        Success.call(this, 'Se ha canelado la confirmación de llegada del cliente correctamente')
+      }
       emit('load')
       emit('closeDialog')
     }).catch((error) => {

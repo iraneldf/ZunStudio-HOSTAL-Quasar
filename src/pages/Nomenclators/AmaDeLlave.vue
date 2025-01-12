@@ -7,9 +7,12 @@
     </q-breadcrumbs>
     <q-table class="q-pa-md" :filter="filter" title="AmaDeLlave" :rows="items" :columns="columns" row-key="id"
              no-data-label="No hay elementos disponibles" no-results-label="No hay elementos disponibles"
+             v-model:pagination="pagination"
+             @request="onRequest"
+             :rows-per-page-options=[5,7,10,20,50]
              loading-label="Cargando..." rows-per-page-label="Filas por página">
       <template v-slot:top>
-        <div class="col-4 q-table__title"><span>AmaDeLlave</span>
+        <div class="col-4 q-table__title"><span>Amas de llave</span>
           <q-input outline color="primary" flat v-model="filter" debounce="1000" label="Buscar"/>
         </div>
         <q-space/>
@@ -31,7 +34,7 @@
             <header class="q-pa-sm bg-primary">
               <q-toolbar>
                 <q-toolbar-title class="text-subtitle6 text-white">
-                  {{ objeto.id ? 'Editar AmaDeLlave' : 'Adicionar AmaDeLlave' }}
+                  {{ objeto.id ? 'Editar Ama de llave' : 'Adicionar Ama de llave' }}
                 </q-toolbar-title>
               </q-toolbar>
             </header>
@@ -40,11 +43,11 @@
                 <div class="col-xs-12">
                   <q-input label="CI*" v-model="objeto.ci" color="primary" counter
                            maxlength="11" lazy-rules :rules="[
-                      (val) => (val && val.length > 0) || 'Debe insertar un CI',
-                     (val) => (items.length > 0 ? !isValorRepetido(val, 'ci', objeto, items)
-                        : true) || 'Ya existe un CI con ese valor',
-                        (val) => (items.length > 0 ? !validarCarnet(val)
-                        : true) || 'Eso no es un CI válido',
+                     (val) => (val && val.length > 0) || 'Debe insertar un CI',
+                     validateCI,
+                     (val) => (val.length >= 11) || 'El CI debe tener 11 caracteres',
+                     (val) => (items.length > 0 ? !isValorRepetido(val, 'ci', objeto, items) : true) || 'Ya existe un CI con ese valor',
+                     (val) => (items.length > 0 ? !validarCarnet(val): true) || 'Eso no es un CI válido',
                     ]"/>
                 </div>
                 <div class="col-xs-12">
@@ -92,28 +95,16 @@
                       );
                     }
                   "
-                  >
-
-<!--                  <template v-slot:selected-item="{ item }">-->
-<!--                    <q-item clickable v-close-popup>-->
-<!--                      <q-item-section>-->
-<!--                        <span>{{ item.numero }}</span>-->
-<!--                        <q-item-label side>Estado: {{ item.estado }}</q-item-label>-->
-<!--                      </q-item-section>-->
-<!--                    </q-item>-->
-<!--                  </template>-->
-
-                <template v-slot:no-option>
-                  <q-item>
-                    <q-item-section class="text-italic text-grey">
-                      No hay elementos disponibles
-                    </q-item-section>
-                  </q-item>
-                </template>
+                >
+                  <template v-slot:no-option>
+                    <q-item>
+                      <q-item-section class="text-italic text-grey">
+                        No hay elementos disponibles
+                      </q-item-section>
+                    </q-item>
+                  </template>
                 </q-select>
 
-                <q-checkbox :disable="objeto.id === null" class="q-mr-md" right-label v-model="objeto.vip"
-                            label="VIP" color="primary"/>
                 <q-card-actions class="col-12 q-mt-none justify-end">
                   <q-btn class="text-white " color="primary" aling="right" type="submit" label="Guardar"/>
                   <q-btn outline color="primary" type="reset" label="Cancelar"/>
@@ -124,7 +115,7 @@
         </q-dialog>
 
         <DialogDetalles v-if="dialogDetalles" :isOpen="dialogDetalles"
-                        :Elemento="ElementoSeleccionado" :dialogLoad="dialogLoad"
+                        :Elemento="ElementoSeleccionado"
                         @closeDialog="handleCloseDialogDetalles"/>
         <DialogEliminar v-if="isDialogoEliminarAbierto" :isOpen="isDialogoEliminarAbierto"
                         :idElemento="Number(idElementoSeleccionado)" @eliminar="eliminar"
@@ -163,9 +154,10 @@ import {
   eliminarElemento,
   obtener,
   closeDialog,
-  isValorRepetido, validarCarnet, validarSoloNumeros, filterOptionsMultipleFields
+  isValorRepetido, validarCarnet, filterOptionsMultipleFields
 } from 'src/GenericFunctions/funciones.js'
-import { getCustomLabel, obtenerHabitacionesPorAmaDeLlave } from 'src/helpers/amaDellaves'
+import { getCustomLabel, obtenerHabitacionesPorAmaDeLlave, validateCI, validateTelefono } from 'src/helpers/amaDellaves'
+import { usePagination } from 'src/hooks/usePagination'
 // Columnas de la Tabla,
 const columns = [
   {
@@ -204,6 +196,24 @@ const columns = [
     sortable: true
   }
 ]
+
+// Custom hook de paginación (llama los datos paginados + filter + order by)
+const {
+  items,
+  pagination,
+  filter,
+  onRequest,
+  loadPaginate
+} = usePagination('AmaDeLlave') // poner aqui el nombre de la entidad
+
+const objetoInicial = reactive({
+  ci: null,
+  nombre: null,
+  apellido: null,
+  telefono: null,
+  habitacionIds: []
+})
+
 // Variables Booleanas
 const dialog = ref(false)
 const dialogDetalles = ref(false)
@@ -215,23 +225,9 @@ const myForm = ref(null)
 const idElementoSeleccionado = ref(null)
 const ElementoSeleccionado = ref(null)
 
-// Variables vacias
-const filter = ref('')
-
 // Arreglos
-const items = ref([])
 const arrayHabitaciones = ref([])
 const filtradoHabitacion = ref([])
-
-const objetoInicial = reactive({
-  // id: null,
-  ci: null,
-  nombre: null,
-  apellido: null,
-  telefono: null,
-  vip: false,
-  habitacionIds: []
-})
 
 // Crear una copia del objeto inicial
 const objeto = reactive({ ...objetoInicial })
@@ -239,7 +235,7 @@ const objeto = reactive({ ...objetoInicial })
 // 1- Funcion para pasar parametros en el Adicionar SaveData
 const Guardar = () => {
   const url = (objeto.id) ? '/api/AmaDeLlave/Actualizar' : '/api/AmaDeLlave/Crear'
-  saveData(url, objeto, load, close, dialogLoad)
+  saveData(url, objeto, loadPaginate, close, dialogLoad)
 }
 
 // Funcion para Obtener los datos para editar
@@ -248,11 +244,12 @@ const obtenerElementoPorId = async (id) => {
   filtradoHabitacion.value = arrayHabitaciones.value
   await obtener('/api/AmaDeLlave/ObtenerPorId', id, objeto, dialogLoad, dialog)
   // pone en la prop habitacionIds del objeto las habitaciones para que aparezcan en el editar
-  objeto.habitacionIds = await obtenerHabitacionesPorAmaDeLlave(id)
+  const habitaciones = await obtenerHabitacionesPorAmaDeLlave(id)
+  objeto.habitacionIds = habitaciones.map(habitacion => habitacion.id)
 }
 // Funcion para eliminar elemento
 const eliminar = async () => {
-  await eliminarElemento('/api/AmaDeLlave/Eliminar', idElementoSeleccionado.value, load, dialogLoad)
+  await eliminarElemento('/api/AmaDeLlave/Eliminar', idElementoSeleccionado.value, loadPaginate, dialogLoad)
 }
 
 // Funcion para abrir el dialog de eliminar y pasar el ID del elemento
@@ -264,11 +261,6 @@ const abrirDialogoEliminar = (id) => {
 const abrirDialogoDetalles = (obj) => {
   ElementoSeleccionado.value = obj
   dialogDetalles.value = true
-}
-
-// 2- Funcion para pasar por parametro el arreglo de los elementos de la tabla
-const load = async () => {
-  items.value = await loadGet('/api/AmaDeLlave/ObtenerListadoPaginado')
 }
 
 // Funcion para cerrar el dialog
@@ -283,21 +275,14 @@ const handleCloseDialogDetalles = () => {
 const close = async () => {
   closeDialog(objeto, objetoInicial, myForm, dialog)
 }
-
-// valida el telefono
-const validateTelefono = (val) => {
-  return validarSoloNumeros(val) ? true : 'El teléfono solo debe contener números'
-}
-
+// const todos = ref([])
 // Funcion para cargar los datos al cargar la pagina
 onMounted(async () => {
-  // console.log(process.env.NODE_ENV)
   dialogLoad.value = true
-  items.value = await loadGet('/api/AmaDeLlave/ObtenerListadoPaginado')
+  // todos.value = await loadGet('/api/AmaDeLlave/ObtenerListadoPaginado')
+  await loadPaginate()
   dialogLoad.value = false
-  arrayHabitaciones.value = await loadGet(
-    '/api/Habitacion/ObtenerListadoPaginado'
-  )
+  arrayHabitaciones.value = await loadGet('/api/Habitacion/ObtenerListadoPaginado')
 })
 
 </script>
