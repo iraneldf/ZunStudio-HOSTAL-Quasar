@@ -29,156 +29,24 @@
             Imprimir
           </q-tooltip>
         </q-btn>
-
-        <q-dialog v-model="dialog" persistent>
-          <q-card style="width: 700px; max-width: 80vw; height: auto;">
-            <header class="q-pa-sm bg-primary">
-              <q-toolbar>
-                <q-toolbar-title class="text-subtitle6 text-white">
-                  {{ objeto.id ? 'Editar Reserva' : 'Adicionar Reserva' }}
-                </q-toolbar-title>
-              </q-toolbar>
-            </header>
-
-            <q-form @submit.prevent="Guardar()" @reset="close" ref="myForm">
-              <div class="q-gutter-md q-ma-md">
-
-                  <div>
-                    <q-input
-                      v-model="formattedDateRange"
-                      label="Seleccionar rango de fechas*"
-                      readonly
-                      outlined
-                      :error="!!errorMessage"
-                      :error-message="errorMessage"
-                    >
-                      <!-- Icono para abrir el calendario -->
-                      <template v-slot:append>
-                        <q-icon name="event" class="cursor-pointer">
-                          <q-popup-proxy>
-                            <q-date
-                              v-model="fechasSeleccionadas"
-                              emit-immediately
-                              range
-                              @update:modelValue="validarFechas"
-                              format="YYYY-MM-DD"
-                              mask="YYYY-MM-DD"
-                            >
-                              <div v-if="errorMessage">
-                                <span class="text-negative">{{ errorMessage }} <q-icon name="error"/> </span>
-                              </div>
-                            </q-date>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-
-                  <q-select
-                    v-if="condicionMostrarSelects"
-                    transition-show="flip-up"
-                    transition-hide="flip-down"
-                    class="col-xs-12 col-sm-12"
-                    v-model="objeto.clienteId"
-                    label="Seleccionar Cliente*"
-                    :loading="cargandoClientes"
-                    emit-value
-                    map-options
-                    use-input
-                    :options="filtradoCliente"
-                    option-value="id"
-                    :option-label="getCustomLabelCliente"
-                    :rules="[(val) => !!val || 'Debe seleccinar un Cliente',]"
-                    @filter="
-                    (val, update) => {
-                      filtradoCliente = filterOptionsMultipleFields(
-                        val,
-                        update,
-                        filtradoCliente,
-                        ['nombre','apellidos','ci'],
-                        arrayClientes
-                      );
-                    }
-                  "
-                  >
-                    <template v-slot:no-option>
-                      <q-item>
-                        <q-item-section class="text-italic text-grey">
-                          No hay elementos disponibles
-                        </q-item-section>
-                      </q-item>
-                    </template>
-                  </q-select>
-                  <q-select
-                    v-if="condicionMostrarSelects"
-                    transition-show="flip-up"
-                    transition-hide="flip-down"
-                    class="col-xs-12 col-sm-12"
-                    v-model="objeto.habitacionId"
-                    label="Seleccionar Habitación*"
-                    emit-value
-                    map-options
-                    :loading="cargandoHabitaciones"
-                    use-input
-                    :options="filtradoHabitacion"
-                    option-value="id"
-                    option-label="numero"
-                    :rules="[(val) => !!val || 'Debe seleccinar una Habitación',]"
-                    @filter="
-                    (val, update) => {
-                      filtradoHabitacion = filterOptionsMultipleFields(
-                        val,
-                        update,
-                        filtradoHabitacion,
-                        ['numero','estado'],
-                        arrayHabitaciones
-                      );
-                    }
-                  "
-                  >
-                    <template v-slot:no-option>
-                      <q-item>
-                        <q-item-section class="text-italic text-grey">
-                          No hay elementos disponibles
-                        </q-item-section>
-                      </q-item>
-                    </template>
-                  </q-select>
-                </div>
-                <q-card-actions class="q-mt-none justify-end">
-                  <q-btn class="text-white" color="primary" type="submit" label="Guardar"/>
-                  <q-btn outline color="primary" type="reset" label="Cancelar"/>
-                </q-card-actions>
-              </div>
-            </q-form>
-
-          </q-card>
-        </q-dialog>
-
-        <ConfirmarLlegada v-if="dialogConfirmarLlegada" :isOpen="dialogConfirmarLlegada"
-                          :reservaSeleccionada="reservaSeleccionada" @load="loadPaginate"
-                          @closeDialog="handleCloseDialogConfirmar"/>
-
-        <DialogEliminar v-if="isDialogoEliminarAbierto" :isOpen="isDialogoEliminarAbierto"
-                        :idElemento="Number(idElementoSeleccionado)" @eliminar="eliminar"
-                        @closeDialog="handleCloseDialog"/>
-
-        <DialogLoad :dialogLoad="dialogLoad"/>
-
       </template>
       <template v-slot:body-cell-fechaEntrada="props">
-        <q-td :props="props">
-          {{ date.formatDate(props.value, 'YYYY-MM-DD') }}
+        <q-td
+          :props="props"
+          :class="{'text-red': esFechaPasada(props.value) && !props.row.llegadaCliente}"
+        >
+          {{ date.formatDate(props.value, 'DD/MM/YYYY') }}
         </q-td>
       </template>
       <template v-slot:body-cell-fechaSalida="props">
         <q-td :props="props">
-          {{ date.formatDate(props.value, 'YYYY-MM-DD') }}
+          {{ date.formatDate(props.value, 'DD/MM/YYYY') }}
         </q-td>
       </template>
       <template v-slot:body-cell-llegadaCliente="props">
         <q-td :props="props">
-          <q-icon flat :name="!props.value ? 'highlight_off' : 'check_circle'"
-                  :class="(props.value === 0) ? 'text-grey' : 'text-primary'" size="20px"/>
+          <q-icon :name="props.value ? 'check_circle' : 'highlight_off'"
+                  :class="props.value ? 'text-primary' : 'text-grey'" size="20px"/>
         </q-td>
       </template>
 
@@ -188,6 +56,7 @@
             <q-btn flat dense size="sm"
                    @click="abrirDialogoConfirmarLlegada(props.row)"
                    :text-color="props.row.llegadaCliente ? 'red' : 'primary'"
+                   :disable="esFechaPasada(props.row.fechaEntrada)"
                    icon="check">
               <q-tooltip>
                 {{
@@ -195,9 +64,19 @@
                 }}
               </q-tooltip>
             </q-btn>
-
-            <q-btn flat dense size="sm" @click="obtenerElementoPorId(props.row.id)" text-color="primary" icon="edit">
+            <q-btn flat dense size="sm"
+                   @click="obtenerElementoPorId(props.row.id)"
+                   :disable="props.row.llegadaCliente || esFechaPasada(props.row.fechaEntrada)"
+                   text-color="primary"
+                   icon="edit">
               <q-tooltip>Editar datos</q-tooltip>
+            </q-btn>
+            <q-btn flat dense size="sm"
+                   @click="abrirDialogoCambiarHabitacion(props.row)"
+                   text-color="primary"
+                   :disable="props.row.llegadaCliente || esFechaPasada(props.row.fechaEntrada)"
+                   icon="sync">
+              <q-tooltip>Cambiar de habitación</q-tooltip>
             </q-btn>
             <q-btn flat dense size="sm" @click="abrirDialogoEliminar(props.row.id)" text-color="negative" icon="delete">
               <q-tooltip>Eliminar</q-tooltip>
@@ -208,6 +87,144 @@
 
     </q-table>
   </div>
+  <!--Dialogs-->
+  <q-dialog v-model="dialog" persistent>
+    <q-card style="width: 700px; max-width: 80vw; height: auto;">
+      <header class="q-pa-sm bg-primary">
+        <q-toolbar>
+          <q-toolbar-title class="text-subtitle6 text-white">
+            {{ objeto.id ? 'Editar Reserva' : 'Adicionar Reserva' }}
+          </q-toolbar-title>
+        </q-toolbar>
+      </header>
+
+      <q-form @submit.prevent="Guardar()" @reset="close" ref="myForm">
+        <div class="q-gutter-md q-ma-md">
+
+          <div>
+            <q-input
+              v-model="formattedDateRange"
+              label="Seleccionar rango de fechas*"
+              readonly
+              outlined
+              :error="!!errorMessage"
+              :error-message="errorMessage"
+            >
+              <!-- Icono para abrir el calendario -->
+              <template v-slot:append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy>
+                    <q-date
+                      v-model="fechasSeleccionadas"
+                      emit-immediately
+                      range
+                      @update:modelValue="validarFechas"
+                      format="YYYY-MM-DD"
+                      mask="YYYY-MM-DD"
+                    >
+                      <div v-if="errorMessage">
+                        <span class="text-negative">{{ errorMessage }} <q-icon name="error"/> </span>
+                      </div>
+                    </q-date>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+
+            <q-select
+              v-if="condicionMostrarSelects"
+              transition-show="flip-up"
+              transition-hide="flip-down"
+              class="col-xs-12 col-sm-12"
+              v-model="objeto.clienteId"
+              label="Seleccionar Cliente*"
+              :loading="cargandoClientes"
+              emit-value
+              map-options
+              use-input
+              :options="filtradoCliente"
+              option-value="id"
+              :option-label="getCustomLabelCliente"
+              :rules="[(val) => !!val || 'Debe seleccinar un Cliente',]"
+              @filter="
+                    (val, update) => {
+                      filtradoCliente = filterOptionsMultipleFields(
+                        val,
+                        update,
+                        filtradoCliente,
+                        ['nombre','apellidos','ci'],
+                        arrayClientes
+                      );
+                    }
+                  "
+            >
+              <template v-slot:no-option>
+                <q-item>
+                  <q-item-section class="text-italic text-grey">
+                    No hay elementos disponibles
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
+            <q-select
+              v-if="condicionMostrarSelects"
+              transition-show="flip-up"
+              transition-hide="flip-down"
+              class="col-xs-12 col-sm-12"
+              v-model="objeto.habitacionId"
+              label="Seleccionar Habitación*"
+              emit-value
+              map-options
+              :loading="cargandoHabitaciones"
+              use-input
+              :options="filtradoHabitacion"
+              option-value="id"
+              option-label="numero"
+              :rules="[(val) => !!val || 'Debe seleccinar una Habitación',]"
+              @filter="
+                    (val, update) => {
+                      filtradoHabitacion = filterOptionsMultipleFields(
+                        val,
+                        update,
+                        filtradoHabitacion,
+                        ['numero','estado'],
+                        arrayHabitaciones
+                      );
+                    }
+                  "
+            >
+              <template v-slot:no-option>
+                <q-item>
+                  <q-item-section class="text-italic text-grey">
+                    No hay elementos disponibles
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
+          </div>
+          <q-card-actions class="q-mt-none justify-end">
+            <q-btn class="text-white" color="primary" type="submit" label="Guardar"/>
+            <q-btn outline color="primary" type="reset" label="Cancelar"/>
+          </q-card-actions>
+        </div>
+      </q-form>
+
+    </q-card>
+  </q-dialog>
+
+  <CambiarHabitacion v-if="dialogCambiarHabitacion" :isOpen="dialogCambiarHabitacion"
+                     :reservaSeleccionada="reservaSeleccionada" @load="loadPaginate"
+                     @closeDialog="handleCloseDialogCambiarHabitacion"/>
+
+  <ConfirmarLlegada v-if="dialogConfirmarLlegada" :isOpen="dialogConfirmarLlegada"
+                    :reservaSeleccionada="reservaSeleccionada" @load="loadPaginate"
+                    @closeDialog="handleCloseDialogConfirmar"/>
+
+  <DialogEliminar v-if="isDialogoEliminarAbierto" :isOpen="isDialogoEliminarAbierto"
+                  :idElemento="Number(idElementoSeleccionado)" @eliminar="eliminar"
+                  @closeDialog="handleCloseDialog"/>
+
+  <DialogLoad :dialogLoad="dialogLoad"/>
 </template>
 
 <script setup>
@@ -234,10 +251,10 @@ import {
   fechasSeleccionadas, formattedDateRange,
   getClientes,
   getCustomLabelCliente,
-  getHabitaciones,
-  validarFechas
+  getHabitaciones
 } from 'src/helpers/reserva'
 import { usePagination } from 'src/hooks/usePagination'
+import CambiarHabitacion from 'components/DialogBoxes/Reserva/CambiarHabitacion.vue'
 
 // Columnas de la Tabla,
 const columns = [
@@ -325,6 +342,7 @@ const dialog = ref(false)
 const dialogLoad = ref(true)
 const isDialogoEliminarAbierto = ref(false)
 const dialogConfirmarLlegada = ref(false)
+const dialogCambiarHabitacion = ref(false)
 
 // Variables Nulas
 const myForm = ref(null)
@@ -337,14 +355,15 @@ const filtradoCliente = ref([])
 
 // Funciones
 // 1- Funcion para pasar parametros en el Adicionar SaveData
-const Guardar = () => {
+const Guardar = async () => {
   if (!errorMessage.value) {
     objeto.fechaEntrada = fechasSeleccionadas.value.from
     objeto.fechaSalida = fechasSeleccionadas.value.to
     const url = (objeto.id) ? '/api/Reserva/Actualizar' : '/api/Reserva/Crear'
-    saveData(url, objeto, loadPaginate, close, dialogLoad)
+    const res = await saveData(url, objeto, loadPaginate, close, dialogLoad)
     filtradoHabitacion.value = arrayHabitaciones.value
     filtradoCliente.value = arrayClientes.value
+    console.log(res)
   }
 }
 
@@ -387,6 +406,11 @@ const abrirDialogoConfirmarLlegada = (elemento) => {
   dialogConfirmarLlegada.value = true
 }
 
+const abrirDialogoCambiarHabitacion = (elemento) => {
+  reservaSeleccionada.value = elemento
+  dialogCambiarHabitacion.value = true
+}
+
 // Funcion para cerrar el dialog eliminar
 const handleCloseDialog = () => {
   isDialogoEliminarAbierto.value = false
@@ -394,6 +418,10 @@ const handleCloseDialog = () => {
 // Funcion para cerrar el dialog confirmar llegada
 const handleCloseDialogConfirmar = () => {
   dialogConfirmarLlegada.value = false
+}
+// Funcion para cerrar el dialog confirmar llegada
+const handleCloseDialogCambiarHabitacion = () => {
+  dialogCambiarHabitacion.value = false
 }
 // Funcion para cerrar el dialog principal de Adicionar y Editar y resetear los campos del formulario
 const close = async () => {
@@ -403,6 +431,74 @@ const close = async () => {
   errorMessage.value = null
   formattedDateRange.value = null
   closeDialog(objeto, objetoInicial, myForm, dialog)
+}
+
+const esFechaPasada = (fecha) => {
+  // Obtener la fecha actual y normalizarla (sin horas, minutos, segundos ni milisegundos)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
+
+  // Convertir la fecha a comparar y normalizarla
+  const fechaComparar = new Date(fecha)
+  fechaComparar.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
+
+  // Comparar solo las fechas (días)
+  return fechaComparar < hoy
+}
+
+// Manejo de las fechas del fomulario
+const validarFechas = async (value) => {
+  arrayHabitaciones.value = []
+  if (value) {
+    const {
+      from,
+      to
+    } = value
+    const hoy = date.formatDate(new Date(), 'YYYY-MM-DD')
+
+    if (from && to) {
+      // Convierte las fechas a objetos Date y añade la hora local
+      const fromDate = new Date(from + 'T00:00:00')
+      const toDate = new Date(to + 'T00:00:00')
+
+      // Formatea las fechas en tu zona horaria local
+      const fe = fromDate.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+      const fs = toDate.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+
+      formattedDateRange.value = `Fecha inicial: ${fe}, Fecha final: ${fs}`
+      const entrada = new Date(from)
+      const salida = new Date(to)
+      const diffTime = salida - entrada
+      const diffDays = diffTime / (1000 * 60 * 60 * 24) // Convertir milisegundos a días
+      if (from < hoy) {
+        errorMessage.value = 'La fecha de entrada debe ser posterior a la actual.'
+      } else if (diffDays < 2) {
+        errorMessage.value = 'La reservas deben ser de 3 días como mínimo.'
+      } else {
+        errorMessage.value = null
+      }
+
+      if (!errorMessage.value) {
+        await getHabitaciones(from, to)
+        // const habitacionExiste = arrayHabitaciones.value.some(
+        //   (habitacion) => habitacion.id === objeto.habitacionId
+        // )
+        // // quitar la habitacion del select si no esta en la lista de habitaciones disponibles
+        // if (!habitacionExiste) objeto.habitacionId = null
+      }
+    }
+  } else {
+    formattedDateRange.value = ''
+    errorMessage.value = 'Las fechas son obligatorias.'
+  }
 }
 
 // Funcion para cargar los datos al cargar la pagina

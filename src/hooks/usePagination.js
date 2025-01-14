@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
 import { loadSelectList } from 'src/GenericFunctions/funciones'
 
 export function usePagination (entidad) {
@@ -6,7 +6,7 @@ export function usePagination (entidad) {
   const items = ref([])
 
   // Configuración de paginación
-  const pagination = reactive({
+  const pagination = ref({
     page: 1,
     rowsPerPage: 5,
     rowsNumber: 0, // Total de filas (se actualiza dinámicamente)
@@ -21,7 +21,7 @@ export function usePagination (entidad) {
 
   // Función para manejar los cambios de página
   async function onRequest (props) {
-    pagination.value = props.pagination // Actualiza la paginación
+    Object.assign(pagination.value, props.pagination) // Actualiza la paginación
     await loadPaginate() // Obtiene los datos para la página actual
   }
 
@@ -31,12 +31,7 @@ export function usePagination (entidad) {
       return `${acumulador}&${f.filtroNombre}=${f.filtroValue}`
     }, '')
 
-    const {
-      page,
-      rowsPerPage,
-      sortBy,
-      descending
-    } = pagination
+    const { page, rowsPerPage, sortBy, descending } = pagination.value
     const direccion = descending ? 'desc' : 'asc'
     const secuencia = !sortBy ? '' : `${sortBy}%3A${direccion}`
     const {
@@ -44,7 +39,7 @@ export function usePagination (entidad) {
       cantidad
     } = await loadSelectList(`/api/${entidad}/ObtenerListadoPaginado?SecuenciaOrdenamiento=${secuencia}&CantidadIgnorar=${(page - 1) * rowsPerPage}&CantidadMostrar=${rowsPerPage}&TextoBuscar=${filter.value}${cadenaFiltros}`)
     items.value = elementos // Actualiza los datos de la tabla
-    pagination.rowsNumber = cantidad // Actualiza el total de filas
+    pagination.value.rowsNumber = cantidad // Actualiza el total de filas
   }
 
   return {

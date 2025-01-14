@@ -2,9 +2,9 @@
   <div class="q-pa-xl">
     <!-- Breadcrumbs -->
     <q-breadcrumbs class="qb cursor-pointer q-pb-md">
-      <q-breadcrumbs-el label="Inicio" icon="home" @click="$router.push('/')" />
-      <q-breadcrumbs-el label="Nomencladores" icon="dashboard" @click="$router.push('/NomenclatorsCard')" />
-      <q-breadcrumbs-el label="Clientes" />
+      <q-breadcrumbs-el label="Inicio" icon="home" @click="$router.push('/')"/>
+      <q-breadcrumbs-el label="Nomencladores" icon="dashboard" @click="$router.push('/NomenclatorsCard')"/>
+      <q-breadcrumbs-el label="Clientes"/>
     </q-breadcrumbs>
 
     <!-- Tabla de Clientes -->
@@ -27,42 +27,46 @@
       <template v-slot:top>
         <div class="col-4 q-table__title">
           <span>Clientes</span>
-          <!-- Filtro de búsqueda -->
-          <q-input
-            outline
-            color="primary"
-            flat
-            v-model="filter"
-            debounce="1000"
-            label="Buscar"
-          />
-          <!-- Filtro por CI -->
-          <q-select
-            transition-show="flip-up"
-            transition-hide="flip-down"
-            v-model="ciSeleccionado"
-            label="Filtrar por CI"
-            emit-value
-            map-options
-            use-input
-            input-debounce="1000"
-            max-values="11"
-            @update:modelValue="onSelect"
-            :options="listaCiFiltrada"
-            @filter="filtrarListaCi"
-          />
+          <div>
+            <!-- Filtro de búsqueda -->
+            <q-input
+              outline
+              color="primary"
+              flat
+              v-model="filter"
+              debounce="1000"
+              label="Buscar"
+            />
+            <!-- Filtro por CI -->
+            <q-select
+              transition-show="flip-up"
+              transition-hide="flip-down"
+              v-model="ciSeleccionado"
+              label="Filtrar por CI"
+              emit-value
+              map-options
+              use-input
+              input-debounce="1000"
+              max-values="11"
+              @update:modelValue="onSelect"
+              :options="listaCiFiltrada"
+              @filter="filtrarListaCi"
+            />
+          </div>
         </div>
 
-        <q-space />
+        <q-space/>
 
         <!-- Botones de acción -->
-        <q-btn class="bg-primary" color="primary" icon="add" @click="dialog = true">
+        <q-btn class="bg-primary" style="width: 20px" color="primary" icon="add" @click="dialog = true">
           <q-tooltip class="bg-primary" transition-show="flip-right" transition-hide="flip-left" :offset="[10, 10]">
             Adicionar
           </q-tooltip>
         </q-btn>
-        <q-btn outline class="bg-white q-ml-sm" color="primary" icon="print">
-          <q-tooltip class="bg-primary" :offset="[10, 10]">Imprimir</q-tooltip>
+        <q-btn outline class="bg-white q-ml-sm" style="width: 20px" color="primary" icon="print">
+          <q-tooltip class="bg-primary" :offset="[10, 10]">
+            Imprimir
+          </q-tooltip>
         </q-btn>
       </template>
 
@@ -83,7 +87,8 @@
       <!-- Slot para la columna VIP -->
       <template v-slot:body-cell-vip="props">
         <q-td :props="props">
-          <q-icon :name="props.value ? 'check_circle' : 'highlight_off'" :class="props.value ? 'text-primary' : 'text-grey'" size="20px" />
+          <q-icon :name="props.value ? 'check_circle' : 'highlight_off'"
+                  :class="props.value ? 'text-primary' : 'text-grey'" size="20px"/>
         </q-td>
       </template>
     </q-table>
@@ -99,15 +104,20 @@
           </q-toolbar>
         </header>
         <q-form @submit.prevent="guardar" @reset="close" ref="myForm">
-          <div class="h row q-ma-md">
-            <q-input label="CI*" v-model="objeto.ci" color="primary" counter maxlength="11" lazy-rules :rules="reglasCI" />
-            <q-input label="Nombre*" v-model="objeto.nombre" color="primary" counter autogrow maxlength="100" lazy-rules :rules="reglasNombre" />
-            <q-input label="Apellidos*" v-model="objeto.apellidos" color="primary" counter autogrow maxlength="100" lazy-rules :rules="reglasApellidos" />
-            <q-input label="Teléfono*" v-model="objeto.telefono" color="primary" counter maxlength="11" lazy-rules :rules="reglasTelefono" />
-            <q-checkbox :disable="objeto.id === null" class="q-mr-md" right-label v-model="objeto.vip" label="VIP" color="primary" />
+          <div class="h column q-ma-md">
+            <q-input label="CI*" v-model="objeto.ci" color="primary" counter maxlength="11" lazy-rules
+                     :rules="reglasCI"/>
+            <q-input label="Nombre*" v-model="objeto.nombre" color="primary" counter autogrow maxlength="100" lazy-rules
+                     :rules="reglasNombre"/>
+            <q-input label="Apellidos*" v-model="objeto.apellidos" color="primary" counter autogrow maxlength="100"
+                     lazy-rules :rules="reglasApellidos"/>
+            <q-input label="Teléfono*" v-model="objeto.telefono" color="primary" counter maxlength="11" lazy-rules
+                     :rules="reglasTelefono"/>
+            <q-checkbox :disable="objeto.id === null" class="q-mr-md" right-label v-model="objeto.vip" label="VIP"
+                        color="primary"/>
             <q-card-actions class="col-12 q-mt-none justify-end">
-              <q-btn class="text-white" color="primary" type="submit" label="Guardar" />
-              <q-btn outline color="primary" type="reset" label="Cancelar" />
+              <q-btn class="text-white" color="primary" type="submit" label="Guardar"/>
+              <q-btn outline color="primary" type="reset" label="Cancelar"/>
             </q-card-actions>
           </div>
         </q-form>
@@ -124,7 +134,7 @@
     />
 
     <!-- Diálogo de carga -->
-    <DialogLoad :dialogLoad="dialogLoad" />
+    <DialogLoad :dialogLoad="dialogLoad"/>
   </div>
 </template>
 
@@ -132,18 +142,63 @@
 import { ref, reactive, onMounted } from 'vue'
 import DialogLoad from 'components/DialogBoxes/DialogLoad.vue'
 import DialogEliminar from 'components/DialogBoxes/DialogEliminar.vue'
-import { saveData, eliminarElemento, obtener, closeDialog, isValorRepetido, validarCarnet, validarSoloNumeros, loadGet } from 'src/GenericFunctions/funciones.js'
+import {
+  saveData,
+  eliminarElemento,
+  obtener,
+  closeDialog,
+  isValorRepetido,
+  validarCarnet,
+  validarSoloNumeros,
+  loadGet
+} from 'src/GenericFunctions/funciones.js'
 import { usePagination } from 'src/hooks/usePagination'
 import { validateCI } from 'src/helpers/amaDellaves'
 
 // Columnas de la tabla
 const columns = [
-  { name: 'ci', align: 'center', label: 'CI', field: 'ci', sortable: true },
-  { name: 'nombre', align: 'center', label: 'Nombre', field: 'nombre', sortable: true },
-  { name: 'apellidos', align: 'center', label: 'Apellidos', field: 'apellidos', sortable: true },
-  { name: 'telefono', align: 'center', label: 'Teléfono', field: 'telefono', sortable: true },
-  { name: 'vip', align: 'center', label: 'VIP', field: 'vip', sortable: true },
-  { name: 'action', align: 'center', label: 'Acciones', field: 'action', sortable: true }
+  {
+    name: 'ci',
+    align: 'center',
+    label: 'CI',
+    field: 'ci',
+    sortable: true
+  },
+  {
+    name: 'nombre',
+    align: 'center',
+    label: 'Nombre',
+    field: 'nombre',
+    sortable: true
+  },
+  {
+    name: 'apellidos',
+    align: 'center',
+    label: 'Apellidos',
+    field: 'apellidos',
+    sortable: true
+  },
+  {
+    name: 'telefono',
+    align: 'center',
+    label: 'Teléfono',
+    field: 'telefono',
+    sortable: true
+  },
+  {
+    name: 'vip',
+    align: 'center',
+    label: 'VIP',
+    field: 'vip',
+    sortable: true
+  },
+  {
+    name: 'action',
+    align: 'center',
+    label: 'Acciones',
+    field: 'action',
+    sortable: true
+  }
 ]
 
 // Variables reactivas
@@ -169,7 +224,14 @@ const objetoInicial = reactive({
 const objeto = reactive({ ...objetoInicial })
 
 // Custom hook de paginación
-const { items, pagination, filter, filtrosPorCampos, onRequest, loadPaginate } = usePagination('Cliente')
+const {
+  items,
+  pagination,
+  filter,
+  filtrosPorCampos,
+  onRequest,
+  loadPaginate
+} = usePagination('Cliente')
 
 // Reglas de validación
 const reglasCI = [
@@ -177,7 +239,7 @@ const reglasCI = [
   validateCI,
   (val) => (val.length >= 11) || 'El CI debe tener 11 caracteres',
   (val) => (items.length > 0 ? !isValorRepetido(val, 'ci', objeto, items) : true) || 'Ya existe un CI con ese valor',
-  (val) => (items.length > 0 ? !validarCarnet(val) : true) || 'Eso no es un CI válido'
+  (val) => (items.length > 0 ? validarCarnet(val) : true) || 'Eso no es un CI válido'
 ]
 
 const reglasNombre = [
@@ -228,7 +290,10 @@ const filtrarListaCi = (val, update) => {
 
 const onSelect = (val) => {
   if (val) {
-    filtrosPorCampos.value = [{ filtroNombre: 'CI', filtroValue: val }]
+    filtrosPorCampos.value = [{
+      filtroNombre: 'CI',
+      filtroValue: val
+    }]
   } else {
     filtrosPorCampos.value.splice(0)
   }

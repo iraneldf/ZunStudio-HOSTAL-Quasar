@@ -53,7 +53,7 @@ import { loadSelectList } from 'src/GenericFunctions/funciones'
 
 const dialogLoad = ref(false)
 
-const formattedDateRange = ref(null)
+const formattedDateRange = ref('')
 const fechasSeleccionadas = ref(null)
 
 // Variables vacias
@@ -74,11 +74,20 @@ const columns = [
 ]
 
 // Funciones
-const obtenerHabitaciones = async (val) => {
-  if (val) {
-    items.value = await loadSelectList(`/api/Habitacion/ListaDeHabitacionesDisponiblesPorFechaService?fechaInicio=${val.from}&fechaFin=${val.to}`)
+const obtenerHabitaciones = async (value) => {
+  if (value) {
+    const { from, to } = value
+    items.value = await loadSelectList(`/api/Habitacion/ListaDeHabitacionesDisponiblesPorFechaService?fechaInicio=${from}&fechaFin=${to}`)
+    const fromDate = new Date(from + 'T00:00:00')
+    const toDate = new Date(to + 'T00:00:00')
+
+    // Formatea las fechas en tu zona horaria local
+    const fe = fromDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    const fs = toDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    formattedDateRange.value = `Fecha inicial: ${fe}, Fecha final: ${fs}`
   } else {
     items.value = []
+    formattedDateRange.value = ''
   }
 }
 

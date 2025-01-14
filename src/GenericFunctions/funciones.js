@@ -65,7 +65,8 @@ const load = async (endpoint, lista) => {
 const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
   const respuesta = reactive({
     resultado: null,
-    mensajeError: null
+    mensajeError: null,
+    campo: null
   })
 
   try {
@@ -85,7 +86,6 @@ const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
     if (error.response) {
       // La solicitud fue exitosa, pero hubo un problema con el cuerpo
       // o los encabezados de la respuesta.
-      console.error('Error de red:')
       respuesta.mensajeError = error.response.data.errorMessage || error.response.data.title
       Error.call(this, error.response.data.errorMessage || error.response.data.title)
     } else if (error.request) {
@@ -95,8 +95,6 @@ const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
       // Otros tipos de errores
       console.error('Error:', error.message)
     }
-    // await load()
-    // await close()
     dialogLoad.value = false
     return respuesta
   }
