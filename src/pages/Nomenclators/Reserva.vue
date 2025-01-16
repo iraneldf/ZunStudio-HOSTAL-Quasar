@@ -1,10 +1,13 @@
 <template>
+
   <div class="q-pa-xl">
+    <!-- Breadcrumbs -->
     <q-breadcrumbs class="qb cursor-pointer q-pb-md">
       <q-breadcrumbs-el label="Inicio" icon="home" @click="$router.push('/')"/>
       <q-breadcrumbs-el label="Nomencladores" icon="dashboard" @click="$router.push('/NomenclatorsCard')"/>
       <q-breadcrumbs-el label="Reservas"/>
     </q-breadcrumbs>
+    <!-- Tabla de Reservas -->
     <q-table class="q-pa-md" :filter="filter" title="Reservas" :rows="items" :columns="columns" row-key="id"
              no-data-label="No hay elementos disponibles" no-results-label="No hay elementos disponibles"
              v-model:pagination="pagination"
@@ -13,6 +16,7 @@
              rows-per-page-label="Filas por página"
              loading-label="Cargando...">
 
+      <!-- Slot superior: Título, filtros y botones -->
       <template v-slot:top>
         <div class="col-4 q-table__title"><span>Reservas</span>
           <q-input outline color="primary" flat v-model="filter" debounce="1000" label="Buscar"/>
@@ -30,34 +34,18 @@
           </q-tooltip>
         </q-btn>
       </template>
-      <template v-slot:body-cell-fechaEntrada="props">
-        <q-td
-          :props="props"
-          :class="{'text-red': esFechaPasada(props.value) && !props.row.llegadaCliente}"
-        >
-          {{ date.formatDate(props.value, 'DD/MM/YYYY') }}
-        </q-td>
-      </template>
-      <template v-slot:body-cell-fechaSalida="props">
-        <q-td :props="props">
-          {{ date.formatDate(props.value, 'DD/MM/YYYY') }}
-        </q-td>
-      </template>
-      <template v-slot:body-cell-llegadaCliente="props">
-        <q-td :props="props">
-          <q-icon :name="props.value ? 'check_circle' : 'highlight_off'"
-                  :class="props.value ? 'text-primary' : 'text-grey'" size="20px"/>
-        </q-td>
-      </template>
 
+      <!-- Slot de acciones en la tabla -->
       <template v-slot:body-cell-action="props">
-        <q-td :props="props">
+        <q-td :props="props" :class="{'bg-red-2': props.row.estaCancelada}">
           <div class="q-gutter-sm">
             <q-btn flat dense size="sm"
                    @click="abrirDialogoConfirmarLlegada(props.row)"
-                   :text-color="props.row.llegadaCliente ? 'red' : 'primary'"
-                   :disable="esFechaPasada(props.row.fechaEntrada)"
-                   icon="check">
+                   :text-color="props.row.llegadaCliente ? 'negative' : 'primary'"
+                   :disable="esFechaFutura(props.row.fechaEntrada) ||
+                    (esFechaPasada(props.row.fechaEntrada) && !props.row.llegadaCliente ) ||
+                    props.row.estaCancelada"
+                   :icon="props.row.llegadaCliente ? 'close' : 'check'">
               <q-tooltip>
                 {{
                   props.row.llegadaCliente ? 'Cancelar confirmación de llegada del cliente' : 'Confirmar llegada del cliente'
@@ -66,7 +54,7 @@
             </q-btn>
             <q-btn flat dense size="sm"
                    @click="obtenerElementoPorId(props.row.id)"
-                   :disable="props.row.llegadaCliente || esFechaPasada(props.row.fechaEntrada)"
+                   :disable="props.row.llegadaCliente || esFechaPasada(props.row.fechaEntrada) || props.row.estaCancelada"
                    text-color="primary"
                    icon="edit">
               <q-tooltip>Editar datos</q-tooltip>
@@ -74,20 +62,63 @@
             <q-btn flat dense size="sm"
                    @click="abrirDialogoCambiarHabitacion(props.row)"
                    text-color="primary"
-                   :disable="props.row.llegadaCliente || esFechaPasada(props.row.fechaEntrada)"
+                   :disable="!props.row.llegadaCliente ||props.row.estaCancelada"
                    icon="sync">
               <q-tooltip>Cambiar de habitación</q-tooltip>
             </q-btn>
-            <q-btn flat dense size="sm" @click="abrirDialogoEliminar(props.row.id)" text-color="negative" icon="delete">
-              <q-tooltip>Eliminar</q-tooltip>
+            <q-btn flat dense size="sm"
+                   :disable="!props.row.llegadaCliente"
+                   @click="abrirDialogoCancelar(props.row)"
+                   :text-color="props.row.estaCancelada ? 'primary' : 'negative'"
+                   :icon="props.row.estaCancelada ? 'refresh' : 'cancel'">
+              <q-tooltip>{{ props.row.estaCancelada ? 'Reactivar reserva' : 'Canlecar reserva' }}</q-tooltip>
             </q-btn>
+            <!--            <q-btn flat dense size="sm" @click="abrirDialogoEliminar(props.row.id)" text-color="negative"-->
+            <!--                   icon="delete">-->
+            <!--              <q-tooltip>Eliminar</q-tooltip>-->
+            <!--            </q-btn>-->
           </div>
+        </q-td>
+      </template>
+
+      <!-- Slot para la columna FechaEntrada -->
+      <template v-slot:body-cell-fechaEntrada="props">
+        <q-td
+          :props="props"
+          :class="{
+          'text-red': esFechaPasada(props.value) && !props.row.llegadaCliente && !props.row.estaCancelada,
+          'bg-red-2': props.row.estaCancelada
+            }">
+          {{ date.formatDate(props.value, 'DD/MM/YYYY') }}
+        </q-td>
+      </template>
+
+      <!-- Slot para la columna FechaSalida -->
+      <template v-slot:body-cell-fechaSalida="props">
+        <q-td :props="props" :class="{'bg-red-2': props.row.estaCancelada}">
+          {{ date.formatDate(props.value, 'DD/MM/YYYY') }}
+        </q-td>
+      </template>
+
+      <!-- Slot para la columna LlegadaClientes -->
+      <template v-slot:body-cell-llegadaCliente="props">
+        <q-td :props="props" :class="{'bg-red-2': props.row.estaCancelada}">
+          <q-icon :name="props.value ? 'check_circle' : 'highlight_off'"
+                  :class="props.value ? 'text-primary' : 'text-grey'" size="20px"/>
+        </q-td>
+      </template>
+
+      <!-- Slot para personalizar demas colunmas -->
+      <template v-slot:body-cell="props">
+        <q-td :props="props" :class="{'bg-red-2': props.row.estaCancelada}">
+          {{ props.value }}
         </q-td>
       </template>
 
     </q-table>
   </div>
-  <!--Dialogs-->
+
+  <!-- Diálogo para agregar/editar reserva -->
   <q-dialog v-model="dialog" persistent>
     <q-card style="width: 700px; max-width: 80vw; height: auto;">
       <header class="q-pa-sm bg-primary">
@@ -141,6 +172,8 @@
               :loading="cargandoClientes"
               emit-value
               map-options
+              :error-message="errorCLiente"
+              :error="!!errorCLiente"
               use-input
               :options="filtradoCliente"
               option-value="id"
@@ -212,18 +245,27 @@
     </q-card>
   </q-dialog>
 
+  <!-- Diálogo de eliminación -->
   <CambiarHabitacion v-if="dialogCambiarHabitacion" :isOpen="dialogCambiarHabitacion"
                      :reservaSeleccionada="reservaSeleccionada" @load="loadPaginate"
                      @closeDialog="handleCloseDialogCambiarHabitacion"/>
 
+  <!-- Diálogo de eliminación -->
   <ConfirmarLlegada v-if="dialogConfirmarLlegada" :isOpen="dialogConfirmarLlegada"
                     :reservaSeleccionada="reservaSeleccionada" @load="loadPaginate"
                     @closeDialog="handleCloseDialogConfirmar"/>
 
-  <DialogEliminar v-if="isDialogoEliminarAbierto" :isOpen="isDialogoEliminarAbierto"
-                  :idElemento="Number(idElementoSeleccionado)" @eliminar="eliminar"
-                  @closeDialog="handleCloseDialog"/>
+  <!-- Diálogo para cancelar reserva  -->
+  <DIalogCancelar v-if="isDialogoCancelarAbierto" :isOpen="isDialogoCancelarAbierto"
+                  :reservaSeleccionada="reservaSeleccionada" @load="loadPaginate"
+                  @closeDialog="handleCloseDialogCancelar"/>
 
+  <!-- Diálogo de eliminación -->
+  <!--  <DialogEliminar v-if="isDialogoEliminarAbierto" :isOpen="isDialogoEliminarAbierto"-->
+  <!--                  :idElemento="Number(idElementoSeleccionado)" @eliminar="eliminar"-->
+  <!--                  @closeDialog="handleCloseDialog"/>-->
+
+  <!-- Diálogo de carga -->
   <DialogLoad :dialogLoad="dialogLoad"/>
 </template>
 
@@ -231,11 +273,9 @@
 
 import { onMounted, reactive, ref } from 'vue'
 import DialogLoad from 'components/DialogBoxes/DialogLoad.vue'
-import DialogEliminar from 'components/DialogBoxes/DialogEliminar.vue'
 import ConfirmarLlegada from 'components/DialogBoxes/Reserva/ConfirmarLlegada.vue'
 import {
   closeDialog,
-  eliminarElemento,
   filterOptionsMultipleFields,
   obtener,
   saveData
@@ -247,14 +287,15 @@ import {
   arrayHabitaciones,
   cargandoClientes,
   cargandoHabitaciones, condicionMostrarSelects,
-  errorMessage,
+  errorMessage, esFechaFutura, esFechaPasada,
   fechasSeleccionadas, formattedDateRange,
   getClientes,
   getCustomLabelCliente,
   getHabitaciones
-} from 'src/helpers/reserva'
+} from 'src/helpers/reservaHelpers'
 import { usePagination } from 'src/hooks/usePagination'
 import CambiarHabitacion from 'components/DialogBoxes/Reserva/CambiarHabitacion.vue'
+import DIalogCancelar from 'components/DialogBoxes/Reserva/DIalogCancelar.vue'
 
 // Columnas de la Tabla,
 const columns = [
@@ -307,6 +348,13 @@ const columns = [
     field: 'llegadaCliente',
     sortable: false
   },
+  // {
+  //   name: 'estaCancelada',
+  //   align: 'center',
+  //   label: 'esta cancelada',
+  //   field: 'estaCancelada',
+  //   sortable: false
+  // },
   {
     name: 'action',
     align: 'center',
@@ -314,7 +362,6 @@ const columns = [
     field: 'action',
     sortable: false
   }
-
 ]
 
 // el problema esta en que Object.assign(objeto, objetoInicial) mantiene el id y el reporte que dan error en el crear
@@ -340,14 +387,16 @@ const {
 // Variables Booleanas
 const dialog = ref(false)
 const dialogLoad = ref(true)
-const isDialogoEliminarAbierto = ref(false)
+// const isDialogoEliminarAbierto = ref(false)
+const isDialogoCancelarAbierto = ref(false)
 const dialogConfirmarLlegada = ref(false)
 const dialogCambiarHabitacion = ref(false)
 
 // Variables Nulas
 const myForm = ref(null)
-const idElementoSeleccionado = ref(null)
+// const idElementoSeleccionado = ref(null)
 const reservaSeleccionada = ref(null)
+const errorCLiente = ref(null)
 
 // Arreglos
 const filtradoHabitacion = ref([])
@@ -363,7 +412,9 @@ const Guardar = async () => {
     const res = await saveData(url, objeto, loadPaginate, close, dialogLoad)
     filtradoHabitacion.value = arrayHabitaciones.value
     filtradoCliente.value = arrayClientes.value
-    console.log(res)
+    if (res.status === 422) {
+      errorCLiente.value = res.mensajeError
+    }
   }
 }
 
@@ -385,9 +436,9 @@ const obtenerElementoPorId = async (id) => {
 }
 
 // Funcion para eliminar elemento
-const eliminar = async () => {
-  await eliminarElemento('/api/Reserva/Eliminar', idElementoSeleccionado.value, loadPaginate, dialogLoad)
-}
+// const eliminar = async () => {
+//   await eliminarElemento('/api/Reserva/Eliminar', idElementoSeleccionado.value, loadPaginate, dialogLoad)
+// }
 
 // solo se ejecuta cuando es crear el de editar los abre obtenerPorID
 const abrirDialogoCrear = async () => {
@@ -396,9 +447,14 @@ const abrirDialogoCrear = async () => {
 }
 
 // Funcion para abrir el dialog de eliminar y pasar el ID del elemento
-const abrirDialogoEliminar = (id) => {
-  idElementoSeleccionado.value = id
-  isDialogoEliminarAbierto.value = true
+// const abrirDialogoEliminar = (id) => {
+//   idElementoSeleccionado.value = id
+//   isDialogoEliminarAbierto.value = true
+// }
+
+const abrirDialogoCancelar = (elemento) => {
+  reservaSeleccionada.value = elemento
+  isDialogoCancelarAbierto.value = true
 }
 
 const abrirDialogoConfirmarLlegada = (elemento) => {
@@ -412,8 +468,12 @@ const abrirDialogoCambiarHabitacion = (elemento) => {
 }
 
 // Funcion para cerrar el dialog eliminar
-const handleCloseDialog = () => {
-  isDialogoEliminarAbierto.value = false
+// const handleCloseDialog = () => {
+//   isDialogoEliminarAbierto.value = false
+// }
+// Funcion para cerrar el dialog cancelar
+const handleCloseDialogCancelar = () => {
+  isDialogoCancelarAbierto.value = false
 }
 // Funcion para cerrar el dialog confirmar llegada
 const handleCloseDialogConfirmar = () => {
@@ -430,20 +490,8 @@ const close = async () => {
   arrayClientes.value = []
   errorMessage.value = null
   formattedDateRange.value = null
+  errorCLiente.value = null
   closeDialog(objeto, objetoInicial, myForm, dialog)
-}
-
-const esFechaPasada = (fecha) => {
-  // Obtener la fecha actual y normalizarla (sin horas, minutos, segundos ni milisegundos)
-  const hoy = new Date()
-  hoy.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
-
-  // Convertir la fecha a comparar y normalizarla
-  const fechaComparar = new Date(fecha)
-  fechaComparar.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
-
-  // Comparar solo las fechas (días)
-  return fechaComparar < hoy
 }
 
 // Manejo de las fechas del fomulario

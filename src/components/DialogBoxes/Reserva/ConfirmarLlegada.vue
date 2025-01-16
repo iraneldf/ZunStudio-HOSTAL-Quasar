@@ -74,7 +74,7 @@ const confirmarLlegada = async () => {
       emit('load')
       emit('closeDialog')
     }).catch((error) => {
-      error.response === undefined ? Error.call(this, error.message) : Error.call(this, error.response.data.mensajeError)
+      error.response === undefined ? Error.call(this, error.message) : Error.call(this, error.response.data.errorMessage)
     })
   dialogLoad.value = false
 }

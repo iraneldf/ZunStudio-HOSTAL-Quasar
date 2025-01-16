@@ -1,6 +1,6 @@
 import { ref, reactive } from 'vue'
 import { obtener, eliminarElemento, saveData } from 'src/GenericFunctions/funciones.js'
-import { errorMessage, fechasSeleccionadas, getClientes, getHabitaciones } from 'src/helpers/reserva'
+import { errorMessage, fechasSeleccionadas, getClientes, getHabitaciones } from 'src/helpers/reservaHelpers'
 
 export function useReserva (loadPaginate) {
   const objetoInicial = reactive({
@@ -48,6 +48,12 @@ export function useReserva (loadPaginate) {
     dialogCambiarHabitacion.value = true
   }
 
+  // Funcion para abrir el dialog de eliminar y pasar el ID del elemento
+  const onOpenDialogoEliminar = (id) => {
+    idElementoSeleccionado.value = id
+    isDialogoEliminarAbierto.value = true
+  }
+
   const onCloseDialog = () => {
     dialog.value = false
     Object.assign(objeto, objetoInicial)
@@ -79,6 +85,7 @@ export function useReserva (loadPaginate) {
     onDelete,
     onConfirmArrival,
     onChangeRoom,
+    onOpenDialogoEliminar,
     onCloseDialog,
     onCloseEliminar,
     onCloseConfirmarLlegada,

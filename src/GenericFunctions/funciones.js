@@ -65,8 +65,7 @@ const load = async (endpoint, lista) => {
 const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
   const respuesta = reactive({
     resultado: null,
-    mensajeError: null,
-    campo: null
+    mensajeError: null
   })
 
   try {
@@ -86,8 +85,12 @@ const saveData = async (endpoint, objeto, load, close, dialogLoad) => {
     if (error.response) {
       // La solicitud fue exitosa, pero hubo un problema con el cuerpo
       // o los encabezados de la respuesta.
+      // mostrar solo los que no empiezan por El cliente
       respuesta.mensajeError = error.response.data.errorMessage || error.response.data.title
-      Error.call(this, error.response.data.errorMessage || error.response.data.title)
+      respuesta.status = error.response.data.status
+      if (respuesta.status !== 422) {
+        Error.call(this, error.response.data.errorMessage || error.response.data.title)
+      }
     } else if (error.request) {
       // La solicitud nunca tomó vuela y nunca recibió respuesta,
       // ni siquiera un error de red.
@@ -123,8 +126,9 @@ const eliminarElemento = async (endpoint, id, load, dialogLoad) => {
 
     if (error.response) {
       // La solicitud fue exitosa, pero hubo un problema con el cuerpo o los encabezados de la respuesta.
-      respuesta.mensajeError = error.response.data || error.message
+      respuesta.mensajeError = error.response.data.errorMessage || error.response.data.title
       respuesta.errorApi = error.response.status
+      console.log(error)
     } else if (error.request) {
       // La solicitud nunca tomó vuelo y nunca recibió respuesta, ni siquiera un error de red.
       respuesta.mensajeError = 'Error de conexión: No se pudo conectar con el servidor.'
@@ -156,7 +160,6 @@ const obtener = async (endpoint, id, objeto, dialogLoad, dialog) => {
 
 // Funcion para verificar que los campos sean unicos
 const isValorRepetido = (val, propiedad, objeto, items) => {
-  console.log(items)
   return items.some((e) => e[propiedad] === val && objeto.id !== e.id)
 }
 // Funcion para resetear los campos del dialogo y cerrarlo

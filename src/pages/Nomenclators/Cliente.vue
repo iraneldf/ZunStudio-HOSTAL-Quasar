@@ -105,7 +105,7 @@
         </header>
         <q-form @submit.prevent="guardar" @reset="close" ref="myForm">
           <div class="h column q-ma-md">
-            <q-input label="CI*" v-model="objeto.ci" color="primary" counter maxlength="11" lazy-rules
+            <q-input label="CI*" v-model="objeto.ci" color="primary" counter maxlength="11" lazy-rules :error="!!errorCI" :error-message="errorCI"
                      :rules="reglasCI"/>
             <q-input label="Nombre*" v-model="objeto.nombre" color="primary" counter autogrow maxlength="100" lazy-rules
                      :rules="reglasNombre"/>
@@ -210,6 +210,7 @@ const dialogLoad = ref(true)
 const isDialogoEliminarAbierto = ref(false)
 const idElementoSeleccionado = ref(null)
 const myForm = ref(null)
+const errorCI = ref(null)
 
 // Objeto inicial para el formulario
 const objetoInicial = reactive({
@@ -256,9 +257,12 @@ const reglasTelefono = [
 ]
 
 // Funciones principales
-const guardar = () => {
+const guardar = async () => {
   const url = objeto.id ? '/api/Cliente/Actualizar' : '/api/Cliente/Crear'
-  saveData(url, objeto, loadPaginate, close, dialogLoad)
+  const res = await saveData(url, objeto, loadPaginate, close, dialogLoad)
+  if (res.status === 422) {
+    errorCI.value = res.mensajeError
+  }
 }
 
 const obtenerElementoPorId = async (id) => {
@@ -279,6 +283,7 @@ const handleCloseDialog = () => {
 }
 
 const close = async () => {
+  errorCI.value = false
   closeDialog(objeto, objetoInicial, myForm, dialog)
 }
 

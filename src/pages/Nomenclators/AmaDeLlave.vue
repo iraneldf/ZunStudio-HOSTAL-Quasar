@@ -41,7 +41,7 @@
             <q-form @submit.prevent="Guardar()" @reset="close" ref="myForm">
               <div class="h row q-ma-md">
                 <div class="col-xs-12">
-                  <q-input label="CI*" v-model="objeto.ci" color="primary" counter
+                  <q-input label="CI*" v-model="objeto.ci" color="primary" counter :error="!!errorCI" :error-message="errorCI"
                            maxlength="11" lazy-rules :rules="[
                      (val) => (val && val.length > 0) || 'Debe insertar un CI',
                      validateCI,
@@ -224,6 +224,7 @@ const isDialogoEliminarAbierto = ref(false)
 const myForm = ref(null)
 const idElementoSeleccionado = ref(null)
 const ElementoSeleccionado = ref(null)
+const errorCI = ref(null)
 
 // Arreglos
 const arrayHabitaciones = ref([])
@@ -233,9 +234,12 @@ const filtradoHabitacion = ref([])
 const objeto = reactive({ ...objetoInicial })
 // Funciones
 // 1- Funcion para pasar parametros en el Adicionar SaveData
-const Guardar = () => {
+const Guardar = async () => {
   const url = (objeto.id) ? '/api/AmaDeLlave/Actualizar' : '/api/AmaDeLlave/Crear'
-  saveData(url, objeto, loadPaginate, close, dialogLoad)
+  const res = await saveData(url, objeto, loadPaginate, close, dialogLoad)
+  if (res.status === 422) {
+    errorCI.value = res.mensajeError
+  }
 }
 
 // Funcion para Obtener los datos para editar
@@ -273,6 +277,7 @@ const handleCloseDialogDetalles = () => {
 
 // Funcion para cerrar el dialog principal de Adicionar y Editar y resetear los campos del formulario
 const close = async () => {
+  errorCI.value = false
   closeDialog(objeto, objetoInicial, myForm, dialog)
 }
 // const todos = ref([])

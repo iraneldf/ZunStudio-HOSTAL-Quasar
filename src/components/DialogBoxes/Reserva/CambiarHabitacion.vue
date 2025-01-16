@@ -1,9 +1,15 @@
 <template>
   <q-dialog v-model="abrirDialog" persistent>
     <q-card style="width: 700px; max-width: 80vw; height: auto;">
+       <header class="q-pa-sm bg-primary">
+            <q-toolbar>
+              <q-toolbar-title class="text-subtitle6 text-white">
+               Cambiar habitación
+              </q-toolbar-title>
+            </q-toolbar>
+          </header>
       <q-form @submit.prevent="cambiar()" @reset="close" ref="myForm">
         <div class="q-gutter-md q-ma-md">
-
           <div>
             <q-select
               transition-show="flip-up"

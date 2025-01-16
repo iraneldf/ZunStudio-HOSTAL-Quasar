@@ -57,15 +57,57 @@ const condicionMostrarSelects = computed(() => {
   return fechasSeleccionadas.value.to && fechasSeleccionadas.value.from && !errorMessage.value
 })
 
-class validarFechas {
+const esFechaPasada = (fecha) => {
+  // Obtener la fecha actual y normalizarla (sin horas, minutos, segundos ni milisegundos)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
+
+  // Convertir la fecha a comparar y normalizarla
+  const fechaComparar = new Date(fecha)
+  fechaComparar.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
+
+  // Comparar solo las fechas (días)
+  return fechaComparar < hoy
+}
+
+const esFechaFutura = (fecha) => {
+  // Obtener la fecha actual y normalizarla (sin horas, minutos, segundos ni milisegundos)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
+
+  // Convertir la fecha a comparar y normalizarla
+  const fechaComparar = new Date(fecha)
+  fechaComparar.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
+
+  // Comparar solo las fechas (días)
+  return fechaComparar > hoy
+}
+const esDiaDeEntrada = (fechaEntrada) => {
+  // Obtener la fecha actual y normalizarla (sin horas, minutos, segundos ni milisegundos)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
+
+  // Convertir la fecha a comparar y normalizarla
+  const fechaComparar = new Date(fechaEntrada)
+  fechaComparar.setHours(0, 0, 0, 0) // Establece la hora a 00:00:00.000
+  // Comparar solo las fechas (días)
+  return fechaComparar === hoy
+}
+
+// Función para determinar la clase de la fila
+const getRowClass = (row) => {
+  return row.props.estaCancelada ? 'bg-red-1' : ''
 }
 
 export {
   getCustomLabelCliente,
-  validarFechas,
+  esDiaDeEntrada,
+  esFechaPasada,
+  esFechaFutura,
   getClientes,
   getHabitaciones,
   obtenerHabitacion,
+  getRowClass,
   condicionMostrarSelects,
   fechasSeleccionadas,
   formattedDateRange,

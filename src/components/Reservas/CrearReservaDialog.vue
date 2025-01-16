@@ -32,7 +32,7 @@
                     mask="YYYY-MM-DD"
                   >
                     <div v-if="errorMessage">
-                      <span class="text-negative">{{ errorMessage }} <q-icon name="error" /></span>
+                      <span class="text-negative">{{ errorMessage }} <q-icon name="error"/></span>
                     </div>
                   </q-date>
                 </q-popup-proxy>
@@ -97,8 +97,8 @@
 
         <!-- Acciones del diálogo -->
         <q-card-actions class="q-mt-none justify-end">
-          <q-btn class="text-white" color="primary" type="submit" label="Guardar" />
-          <q-btn outline color="primary" type="reset" label="Cancelar" />
+          <q-btn class="text-white" color="primary" type="submit" label="Guardar"/>
+          <q-btn outline color="primary" type="reset" label="Cancelar"/>
         </q-card-actions>
       </q-form>
     </q-card>
@@ -108,7 +108,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { date } from 'quasar'
-import { getClientes, getHabitaciones } from 'src/helpers/reserva'
+import { arrayHabitaciones, getClientes, getCustomLabelCliente, getHabitaciones } from 'src/helpers/reservaHelpers'
 import { filterOptionsMultipleFields } from 'src/GenericFunctions/funciones.js'
 
 // Props
@@ -135,14 +135,6 @@ const condicionMostrarSelects = ref(true)
 // Computed para determinar si está en modo edición
 const isEditMode = computed(() => !!formData.value.id)
 
-// Watcher para sincronizar la prop dialog con el estado interno
-watch(
-  () => props.dialog,
-  (newValue) => {
-    isDialogOpen.value = newValue
-  }
-)
-
 // Watcher para sincronizar la prop objeto con el estado interno
 watch(
   () => props.objeto,
@@ -164,22 +156,58 @@ const onFilterHabitacion = async (val, update) => {
 }
 
 // Validar fechas
+// Manejo de las fechas del fomulario
 const validarFechas = async (value) => {
-  if (value?.from && value?.to) {
+  arrayHabitaciones.value = []
+  if (value) {
+    const {
+      from,
+      to
+    } = value
     const hoy = date.formatDate(new Date(), 'YYYY-MM-DD')
-    const entrada = new Date(value.from)
-    const salida = new Date(value.to)
-    const diffDays = (salida - entrada) / (1000 * 60 * 60 * 24)
 
-    if (value.from < hoy) {
-      errorMessage.value = 'La fecha de entrada debe ser posterior a la actual.'
-    } else if (diffDays < 2) {
-      errorMessage.value = 'Las reservas deben ser de 3 días como mínimo.'
-    } else {
-      errorMessage.value = null
-      await getHabitaciones(value.from, value.to)
+    if (from && to) {
+      // Convierte las fechas a objetos Date y añade la hora local
+      const fromDate = new Date(from + 'T00:00:00')
+      const toDate = new Date(to + 'T00:00:00')
+
+      // Formatea las fechas en tu zona horaria local
+      const fe = fromDate.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+      const fs = toDate.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+
+      formattedDateRange.value = `Fecha inicial: ${fe}, Fecha final: ${fs}`
+      const entrada = new Date(from)
+      const salida = new Date(to)
+      const diffTime = salida - entrada
+      const diffDays = diffTime / (1000 * 60 * 60 * 24) // Convertir milisegundos a días
+      if (from < hoy) {
+        errorMessage.value = 'La fecha de entrada debe ser posterior a la actual.'
+      } else if (diffDays < 2) {
+        errorMessage.value = 'La reservas deben ser de 3 días como mínimo.'
+      } else {
+        errorMessage.value = null
+      }
+
+      if (!errorMessage.value) {
+        await getHabitaciones(from, to)
+        console.log(arrayHabitaciones.value)
+        // const habitacionExiste = arrayHabitaciones.value.some(
+        //   (habitacion) => habitacion.id === objeto.habitacionId
+        // )
+        // // quitar la habitacion del select si no esta en la lista de habitaciones disponibles
+        // if (!habitacionExiste) objeto.habitacionId = null
+      }
     }
   } else {
+    formattedDateRange.value = ''
     errorMessage.value = 'Las fechas son obligatorias.'
   }
 }
@@ -195,4 +223,13 @@ const onSave = () => {
 const onClose = () => {
   emit('close') // Emitir el evento close
 }
+
+// Watcher para sincronizar la prop dialog con el estado interno
+// watch(
+//   () => props.dialog,
+//   (newValue) => {
+//     isDialogOpen.value = newValue
+//   }
+// )
+
 </script>

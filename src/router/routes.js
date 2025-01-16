@@ -57,6 +57,11 @@ const routes = [
         path: 'ReservasEnRango',
         name: 'ReservasEnRango',
         component: () => import('src/pages/Busqueda/ReservasEnRango.vue')
+      },
+      {
+        path: 'ReservasPage',
+        name: 'ReservasPage',
+        component: () => import('src/views/ReservasPage.vue')
       }
     ]
   },
